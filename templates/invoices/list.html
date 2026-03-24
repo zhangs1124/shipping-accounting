@@ -2,17 +2,36 @@
 {% block title %}帳務管理{% endblock %}
 {% block content %}
 
-<div class="page-header">
+<div class="page-header {% if print_mode %}print-header{% endif %}">
     <h1>📋 帳務管理</h1>
-    <a href="/invoices/new" class="btn btn-primary">＋ 新增帳單</a>
+    {% if not print_mode %}
+    <div style="display:flex; gap:8px;">
+        <a href="/invoices/new" class="btn btn-primary">＋ 新增帳單</a>
+        <a href="/invoices/report/export-excel?voyage_id={{ filter.voyage_id or '' }}&status={{ filter.status or '' }}&date_from={{ filter.date_from or '' }}&date_to={{ filter.date_to or '' }}"
+           class="btn btn-success">⬇ 匯出 Excel</a>
+        <a href="/invoices/report/print?voyage_id={{ filter.voyage_id or '' }}&status={{ filter.status or '' }}&date_from={{ filter.date_from or '' }}&date_to={{ filter.date_to or '' }}"
+           class="btn btn-secondary" target="_blank">🖨 列印報表</a>
+    </div>
+    {% endif %}
 </div>
+
+{% if print_mode %}
+<div class="print-report-meta">
+    <div><strong>報表日期：</strong>{{ print_generated_at }}</div>
+    <div><strong>篩選條件：</strong>
+        航次 {{ filter.voyage_id or "全部" }}、
+        狀態 {{ filter.status or "全部" }}、
+        日期 {{ filter.date_from or "-" }} ~ {{ filter.date_to or "-" }}
+    </div>
+</div>
+{% endif %}
 
 {% if request.query_params.get('error') %}
 <div class="alert alert-error">{{ request.query_params.get('error') }}</div>
 {% endif %}
 
 <!-- 篩選列 -->
-<form method="get" action="/invoices">
+<form method="get" action="/invoices" class="{% if print_mode %}no-print{% endif %}">
     <div class="filter-bar">
         <div class="form-group">
             <label>航次</label>
@@ -90,5 +109,14 @@
         </tbody>
     </table>
 </div>
+
+{% if print_mode %}
+<div class="card print-total">
+    <div class="text-right"><strong>報表總計：</strong>{{ "{:,.2f}".format(report_total_amount) }}</div>
+</div>
+<script>
+window.onload = function () { window.print(); };
+</script>
+{% endif %}
 
 {% endblock %}

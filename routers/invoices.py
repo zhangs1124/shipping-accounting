@@ -8,6 +8,9 @@ from datetime import date
 import csv
 import io
 import re
+from decimal import Decimal
+from openpyxl import Workbook
+from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 
 import models
 from database import get_db
@@ -44,17 +47,7 @@ def list_invoices(
     date_to: Optional[str] = None,
     db: Session = Depends(get_db),
 ):
-    query = db.query(models.Invoice)
-    if voyage_id:
-        query = query.filter(models.Invoice.voyage_id == voyage_id)
-    if status:
-        query = query.filter(models.Invoice.status == status)
-    if date_from:
-        query = query.filter(models.Invoice.invoice_date >= date.fromisoformat(date_from))
-    if date_to:
-        query = query.filter(models.Invoice.invoice_date <= date.fromisoformat(date_to))
-
-    invoices = query.order_by(models.Invoice.invoice_date.desc()).all()
+    invoices = _query_invoices(db, voyage_id, status, date_from, date_to)
     voyages = db.query(models.Voyage).order_by(models.Voyage.voyage_no).all()
 
     return templates.TemplateResponse("invoices/list.html", {
@@ -69,6 +62,132 @@ def list_invoices(
             "date_to": date_to,
         },
     })
+
+def _query_invoices(
+    db: Session,
+    voyage_id: Optional[int],
+    status: Optional[str],
+    date_from: Optional[str],
+    date_to: Optional[str],
+):
+    query = db.query(models.Invoice)
+    if voyage_id:
+        query = query.filter(models.Invoice.voyage_id == voyage_id)
+    if status:
+        query = query.filter(models.Invoice.status == status)
+    if date_from:
+        query = query.filter(models.Invoice.invoice_date >= date.fromisoformat(date_from))
+    if date_to:
+        query = query.filter(models.Invoice.invoice_date <= date.fromisoformat(date_to))
+    return query.order_by(models.Invoice.invoice_date.desc()).all()
+
+
+@router.get("/report/print", response_class=HTMLResponse)
+def print_invoice_report(
+    request: Request,
+    voyage_id: Optional[int] = None,
+    status: Optional[str] = None,
+    date_from: Optional[str] = None,
+    date_to: Optional[str] = None,
+    db: Session = Depends(get_db),
+):
+    invoices = _query_invoices(db, voyage_id, status, date_from, date_to)
+    voyages = db.query(models.Voyage).order_by(models.Voyage.voyage_no).all()
+    total_amount = sum((inv.total_amount for inv in invoices), Decimal("0"))
+    return templates.TemplateResponse("invoices/list.html", {
+        "request": request,
+        "invoices": invoices,
+        "voyages": voyages,
+        "statuses": INVOICE_STATUSES,
+        "print_mode": True,
+        "print_generated_at": date.today().strftime("%Y-%m-%d"),
+        "report_total_amount": total_amount,
+        "filter": {
+            "voyage_id": voyage_id,
+            "status": status,
+            "date_from": date_from,
+            "date_to": date_to,
+        },
+    })
+
+
+@router.get("/report/export-excel")
+def export_invoice_report_excel(
+    voyage_id: Optional[int] = None,
+    status: Optional[str] = None,
+    date_from: Optional[str] = None,
+    date_to: Optional[str] = None,
+    db: Session = Depends(get_db),
+):
+    invoices = _query_invoices(db, voyage_id, status, date_from, date_to)
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "帳務報表"
+
+    ws["A1"] = "船務部帳務系統 - 帳務報表"
+    ws["A2"] = f"列印日期：{date.today().strftime('%Y-%m-%d')}"
+    ws["A3"] = f"篩選條件：航次={voyage_id or '全部'}、狀態={status or '全部'}、日期={date_from or '-'}~{date_to or '-'}"
+    ws.merge_cells("A1:G1")
+    ws.merge_cells("A2:G2")
+    ws.merge_cells("A3:G3")
+
+    header_row = 5
+    headers = ["帳單編號", "航次", "客戶名稱", "帳單日期", "總金額", "狀態", "建立時間"]
+    for idx, header in enumerate(headers, start=1):
+        cell = ws.cell(row=header_row, column=idx, value=header)
+        cell.font = Font(bold=True, color="FFFFFF")
+        cell.fill = PatternFill("solid", fgColor="1A6FC4")
+        cell.alignment = Alignment(horizontal="center", vertical="center")
+
+    thin_border = Border(
+        left=Side(style="thin", color="D9D9D9"),
+        right=Side(style="thin", color="D9D9D9"),
+        top=Side(style="thin", color="D9D9D9"),
+        bottom=Side(style="thin", color="D9D9D9"),
+    )
+
+    row = header_row + 1
+    total_amount = Decimal("0")
+    for inv in invoices:
+        ws.cell(row=row, column=1, value=inv.invoice_no)
+        ws.cell(row=row, column=2, value=inv.voyage.voyage_no)
+        ws.cell(row=row, column=3, value=inv.customer_name)
+        ws.cell(row=row, column=4, value=inv.invoice_date.strftime("%Y-%m-%d"))
+        amount_cell = ws.cell(row=row, column=5, value=float(inv.total_amount))
+        ws.cell(row=row, column=6, value=inv.status)
+        ws.cell(row=row, column=7, value=inv.created_at.strftime("%Y-%m-%d %H:%M") if inv.created_at else "")
+
+        amount_cell.number_format = '#,##0.00'
+        amount_cell.alignment = Alignment(horizontal="right")
+        total_amount += inv.total_amount
+        row += 1
+
+    ws.cell(row=row, column=4, value="總計").font = Font(bold=True)
+    total_cell = ws.cell(row=row, column=5, value=float(total_amount))
+    total_cell.font = Font(bold=True)
+    total_cell.number_format = '#,##0.00'
+    total_cell.alignment = Alignment(horizontal="right")
+
+    for col in ("A", "B", "C", "D", "E", "F", "G"):
+        ws.column_dimensions[col].width = {"A": 18, "B": 14, "C": 22, "D": 14, "E": 14, "F": 12, "G": 20}[col]
+
+    for r in range(header_row, row + 1):
+        for c in range(1, 8):
+            ws.cell(row=r, column=c).border = thin_border
+            if c in (1, 2, 4, 6, 7):
+                ws.cell(row=r, column=c).alignment = Alignment(horizontal="center", vertical="center")
+            if c == 3:
+                ws.cell(row=r, column=c).alignment = Alignment(horizontal="left", vertical="center")
+
+    output = io.BytesIO()
+    wb.save(output)
+    output.seek(0)
+    filename = f"invoice_report_{date.today().strftime('%Y%m%d')}.xlsx"
+    return StreamingResponse(
+        iter([output.getvalue()]),
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": f"attachment; filename={filename}"},
+    )
 
 
 @router.get("/new", response_class=HTMLResponse)

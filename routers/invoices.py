@@ -127,12 +127,27 @@ def export_invoice_report_excel(
     ws["A1"] = "船務部帳務系統 - 帳務報表"
     ws["A2"] = f"列印日期：{date.today().strftime('%Y-%m-%d')}"
     ws["A3"] = f"篩選條件：航次={voyage_id or '全部'}、狀態={status or '全部'}、日期={date_from or '-'}~{date_to or '-'}"
-    ws.merge_cells("A1:G1")
-    ws.merge_cells("A2:G2")
-    ws.merge_cells("A3:G3")
+    ws.merge_cells("A1:N1")
+    ws.merge_cells("A2:N2")
+    ws.merge_cells("A3:N3")
 
     header_row = 5
-    headers = ["帳單編號", "航次", "客戶名稱", "帳單日期", "總金額", "狀態", "建立時間"]
+    headers = [
+        "帳單編號",
+        "航次",
+        "客戶名稱",
+        "帳單日期",
+        "帳單狀態",
+        "明細序號",
+        "項目代碼",
+        "項目名稱",
+        "數量",
+        "單價",
+        "幣別",
+        "明細小計",
+        "帳單總金額",
+        "建立時間",
+    ]
     for idx, header in enumerate(headers, start=1):
         cell = ws.cell(row=header_row, column=idx, value=header)
         cell.font = Font(bold=True, color="FFFFFF")
@@ -149,35 +164,55 @@ def export_invoice_report_excel(
     row = header_row + 1
     total_amount = Decimal("0")
     for inv in invoices:
-        ws.cell(row=row, column=1, value=inv.invoice_no)
-        ws.cell(row=row, column=2, value=inv.voyage.voyage_no)
-        ws.cell(row=row, column=3, value=inv.customer_name)
-        ws.cell(row=row, column=4, value=inv.invoice_date.strftime("%Y-%m-%d"))
-        amount_cell = ws.cell(row=row, column=5, value=float(inv.total_amount))
-        ws.cell(row=row, column=6, value=inv.status)
-        ws.cell(row=row, column=7, value=inv.created_at.strftime("%Y-%m-%d %H:%M") if inv.created_at else "")
+        lines = list(inv.lines) if inv.lines else [None]
+        for idx, line in enumerate(lines, start=1):
+            ws.cell(row=row, column=1, value=inv.invoice_no)
+            ws.cell(row=row, column=2, value=inv.voyage.voyage_no)
+            ws.cell(row=row, column=3, value=inv.customer_name)
+            ws.cell(row=row, column=4, value=inv.invoice_date.strftime("%Y-%m-%d"))
+            ws.cell(row=row, column=5, value=inv.status)
+            ws.cell(row=row, column=6, value=idx if line else "")
+            ws.cell(row=row, column=7, value=line.charge_item.code if line else "")
+            ws.cell(row=row, column=8, value=line.charge_item.name if line else "（無明細）")
+            qty_cell = ws.cell(row=row, column=9, value=float(line.quantity) if line else "")
+            unit_cell = ws.cell(row=row, column=10, value=float(line.unit_price) if line else "")
+            ws.cell(row=row, column=11, value=line.currency if line else "")
+            subtotal_cell = ws.cell(row=row, column=12, value=float(line.subtotal) if line else 0)
+            amount_cell = ws.cell(row=row, column=13, value=float(inv.total_amount))
+            ws.cell(row=row, column=14, value=inv.created_at.strftime("%Y-%m-%d %H:%M") if inv.created_at else "")
 
-        amount_cell.number_format = '#,##0.00'
-        amount_cell.alignment = Alignment(horizontal="right")
+            qty_cell.number_format = '#,##0.####'
+            unit_cell.number_format = '#,##0.00'
+            subtotal_cell.number_format = '#,##0.00'
+            amount_cell.number_format = '#,##0.00'
+            subtotal_cell.alignment = Alignment(horizontal="right")
+            amount_cell.alignment = Alignment(horizontal="right")
+            row += 1
+
         total_amount += inv.total_amount
-        row += 1
 
-    ws.cell(row=row, column=4, value="總計").font = Font(bold=True)
-    total_cell = ws.cell(row=row, column=5, value=float(total_amount))
+    ws.cell(row=row, column=12, value="整體總計").font = Font(bold=True)
+    total_cell = ws.cell(row=row, column=13, value=float(total_amount))
     total_cell.font = Font(bold=True)
     total_cell.number_format = '#,##0.00'
     total_cell.alignment = Alignment(horizontal="right")
 
-    for col in ("A", "B", "C", "D", "E", "F", "G"):
-        ws.column_dimensions[col].width = {"A": 18, "B": 14, "C": 22, "D": 14, "E": 14, "F": 12, "G": 20}[col]
+    widths = {
+        "A": 18, "B": 14, "C": 22, "D": 14, "E": 12, "F": 10, "G": 12,
+        "H": 18, "I": 10, "J": 12, "K": 10, "L": 12, "M": 14, "N": 20
+    }
+    for col, width in widths.items():
+        ws.column_dimensions[col].width = width
 
     for r in range(header_row, row + 1):
-        for c in range(1, 8):
+        for c in range(1, 15):
             ws.cell(row=r, column=c).border = thin_border
-            if c in (1, 2, 4, 6, 7):
+            if c in (1, 2, 4, 5, 6, 7, 11, 14):
                 ws.cell(row=r, column=c).alignment = Alignment(horizontal="center", vertical="center")
-            if c == 3:
+            if c in (3, 8):
                 ws.cell(row=r, column=c).alignment = Alignment(horizontal="left", vertical="center")
+            if c in (9, 10, 12, 13):
+                ws.cell(row=r, column=c).alignment = Alignment(horizontal="right", vertical="center")
 
     output = io.BytesIO()
     wb.save(output)

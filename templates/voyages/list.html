@@ -1,0 +1,300 @@
+{% extends "base.html" %}
+{% block title %}航次管理{% endblock %}
+{% block content %}
+
+<div class="page-header">
+    <h1>🗺️ 航次管理</h1>
+    <button class="btn btn-primary" onclick="openModal('addModal')">＋ 新增航次</button>
+</div>
+
+<!-- 清單 -->
+<div class="card">
+    <table>
+        <thead>
+            <tr>
+                <th>航次編號</th><th>船舶</th><th>出發港</th><th>目的港</th>
+                <th>預計出發</th><th>預計抵達</th><th class="text-center">狀態</th>
+                <th class="text-center">操作</th>
+            </tr>
+        </thead>
+        <tbody id="voyageTableBody">
+            {% for v in voyages %}
+            <tr id="voyage-row-{{ v.id }}">
+                <td><strong>{{ v.voyage_no }}</strong></td>
+                <td>{{ v.ship.code }} - {{ v.ship.name }}</td>
+                <td>{{ v.port_of_loading or '-' }}</td>
+                <td>{{ v.port_of_discharge or '-' }}</td>
+                <td>{{ v.etd.strftime('%Y-%m-%d') if v.etd else '-' }}</td>
+                <td>{{ v.eta.strftime('%Y-%m-%d') if v.eta else '-' }}</td>
+                <td class="text-center">
+                    {% if v.status == '計畫中' %}<span class="badge badge-planned">{{ v.status }}</span>
+                    {% elif v.status == '進行中' %}<span class="badge badge-ongoing">{{ v.status }}</span>
+                    {% else %}<span class="badge badge-done">{{ v.status }}</span>{% endif %}
+                </td>
+                <td class="text-center">
+                    <button class="btn btn-warning btn-sm" onclick="openEditModal(
+                        {{ v.id }},'{{ v.voyage_no }}',{{ v.ship_id }},
+                        '{{ v.port_of_loading or '' }}','{{ v.port_of_discharge or '' }}',
+                        '{{ v.etd.strftime('%Y-%m-%d') if v.etd else '' }}',
+                        '{{ v.eta.strftime('%Y-%m-%d') if v.eta else '' }}',
+                        '{{ v.status }}')">編輯</button>
+                    <button class="btn btn-danger btn-sm"
+                        onclick="openDeleteModal({{ v.id }},'{{ v.voyage_no }}')">刪除</button>
+                </td>
+            </tr>
+            {% else %}
+            <tr id="emptyRow"><td colspan="8" class="text-center" style="color:#999;padding:24px;">尚無航次資料</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- 新增 Modal -->
+<div class="modal-overlay" id="addModal">
+    <div class="modal">
+        <div class="modal-header">
+            <h2>新增航次</h2>
+            <button class="modal-close" onclick="closeModal('addModal')">✕</button>
+        </div>
+        <form id="addForm">
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>航次編號 *</label>
+                    <input type="text" id="add_voyage_no" required maxlength="30" placeholder="例：EG-2024-001">
+                </div>
+                <div class="form-group">
+                    <label>船舶 *</label>
+                    <select id="add_ship_id" required>
+                        <option value="">-- 選擇船舶 --</option>
+                        {% for ship in ships %}
+                        <option value="{{ ship.id }}">{{ ship.code }} - {{ ship.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>出發港</label>
+                    <input type="text" id="add_pol" maxlength="50" placeholder="例：高雄">
+                </div>
+                <div class="form-group">
+                    <label>目的港</label>
+                    <input type="text" id="add_pod" maxlength="50" placeholder="例：上海">
+                </div>
+                <div class="form-group">
+                    <label>預計出發日期</label>
+                    <input type="date" id="add_etd">
+                </div>
+                <div class="form-group">
+                    <label>預計抵達日期</label>
+                    <input type="date" id="add_eta">
+                </div>
+            </div>
+            <div id="addError" class="alert alert-error" style="display:none;margin-top:12px;"></div>
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">新增</button>
+                <button type="button" class="btn btn-secondary" onclick="closeModal('addModal')">取消</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- 編輯 Modal -->
+<div class="modal-overlay" id="editModal">
+    <div class="modal">
+        <div class="modal-header">
+            <h2>編輯航次</h2>
+            <button class="modal-close" onclick="closeModal('editModal')">✕</button>
+        </div>
+        <form id="editForm">
+            <input type="hidden" id="edit_id">
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>航次編號（不可修改）</label>
+                    <input type="text" id="edit_voyage_no" disabled style="background:#f0f0f0;">
+                </div>
+                <div class="form-group">
+                    <label>船舶 *</label>
+                    <select id="edit_ship_id" required>
+                        {% for ship in ships %}
+                        <option value="{{ ship.id }}">{{ ship.code }} - {{ ship.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>出發港</label>
+                    <input type="text" id="edit_pol" maxlength="50">
+                </div>
+                <div class="form-group">
+                    <label>目的港</label>
+                    <input type="text" id="edit_pod" maxlength="50">
+                </div>
+                <div class="form-group">
+                    <label>預計出發日期</label>
+                    <input type="date" id="edit_etd">
+                </div>
+                <div class="form-group">
+                    <label>預計抵達日期</label>
+                    <input type="date" id="edit_eta">
+                </div>
+                <div class="form-group">
+                    <label>狀態</label>
+                    <select id="edit_status">
+                        {% for s in statuses %}
+                        <option value="{{ s }}">{{ s }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <div id="editError" class="alert alert-error" style="display:none;margin-top:12px;"></div>
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">儲存</button>
+                <button type="button" class="btn btn-secondary" onclick="closeModal('editModal')">取消</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- 刪除確認 Modal -->
+<div class="modal-overlay" id="deleteModal">
+    <div class="modal" style="max-width:400px;">
+        <div class="modal-header">
+            <h2>確認刪除</h2>
+            <button class="modal-close" onclick="closeModal('deleteModal')">✕</button>
+        </div>
+        <p>確定要刪除航次「<strong id="deleteVoyageNo"></strong>」嗎？</p>
+        <div id="deleteError" class="alert alert-error" style="display:none;margin-top:12px;"></div>
+        <div class="form-actions" style="margin-top:16px;">
+            <button class="btn btn-danger" onclick="confirmDelete()">確定刪除</button>
+            <button class="btn btn-secondary" onclick="closeModal('deleteModal')">取消</button>
+        </div>
+    </div>
+</div>
+
+<script>
+// ship lookup for display
+const shipMap = { {% for s in ships %}"{{ s.id }}": "{{ s.code }} - {{ s.name }}", {% endfor %} };
+const statusBadge = { '計畫中':'badge-planned','進行中':'badge-ongoing','已完成':'badge-done' };
+let deleteTargetId = null;
+
+function openModal(id) { document.getElementById(id).classList.add('active'); }
+function closeModal(id) {
+    document.getElementById(id).classList.remove('active');
+    ['addError','editError','deleteError'].forEach(e => {
+        const el = document.getElementById(e);
+        if (el) el.style.display = 'none';
+    });
+}
+
+function openEditModal(id, voyage_no, ship_id, pol, pod, etd, eta, status) {
+    document.getElementById('edit_id').value = id;
+    document.getElementById('edit_voyage_no').value = voyage_no;
+    document.getElementById('edit_ship_id').value = ship_id;
+    document.getElementById('edit_pol').value = pol;
+    document.getElementById('edit_pod').value = pod;
+    document.getElementById('edit_etd').value = etd;
+    document.getElementById('edit_eta').value = eta;
+    document.getElementById('edit_status').value = status;
+    openModal('editModal');
+}
+
+function openDeleteModal(id, voyage_no) {
+    deleteTargetId = id;
+    document.getElementById('deleteVoyageNo').textContent = voyage_no;
+    document.getElementById('deleteError').style.display = 'none';
+    openModal('deleteModal');
+}
+
+document.getElementById('addForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const body = new URLSearchParams({
+        voyage_no: document.getElementById('add_voyage_no').value,
+        ship_id: document.getElementById('add_ship_id').value,
+        port_of_loading: document.getElementById('add_pol').value,
+        port_of_discharge: document.getElementById('add_pod').value,
+        etd: document.getElementById('add_etd').value,
+        eta: document.getElementById('add_eta').value,
+    });
+    const res = await fetch('/voyages/api', { method: 'POST', body });
+    const data = await res.json();
+    if (data.error) {
+        const el = document.getElementById('addError');
+        el.textContent = data.error; el.style.display = 'block';
+    } else {
+        closeModal('addModal');
+        document.getElementById('addForm').reset();
+        appendRow(data);
+        document.getElementById('emptyRow') && document.getElementById('emptyRow').remove();
+    }
+});
+
+document.getElementById('editForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const id = document.getElementById('edit_id').value;
+    const body = new URLSearchParams({
+        ship_id: document.getElementById('edit_ship_id').value,
+        port_of_loading: document.getElementById('edit_pol').value,
+        port_of_discharge: document.getElementById('edit_pod').value,
+        etd: document.getElementById('edit_etd').value,
+        eta: document.getElementById('edit_eta').value,
+        status: document.getElementById('edit_status').value,
+    });
+    const res = await fetch(`/voyages/api/${id}`, { method: 'POST', body });
+    const data = await res.json();
+    if (data.error) {
+        const el = document.getElementById('editError');
+        el.textContent = data.error; el.style.display = 'block';
+    } else {
+        closeModal('editModal');
+        updateRow(data);
+    }
+});
+
+async function confirmDelete() {
+    const res = await fetch(`/voyages/api/${deleteTargetId}/delete`, { method: 'POST' });
+    const data = await res.json();
+    if (data.error) {
+        const el = document.getElementById('deleteError');
+        el.textContent = data.error; el.style.display = 'block';
+    } else {
+        closeModal('deleteModal');
+        document.getElementById(`voyage-row-${deleteTargetId}`).remove();
+        if (!document.querySelector('#voyageTableBody tr[id^="voyage-row"]')) {
+            document.getElementById('voyageTableBody').innerHTML =
+                '<tr id="emptyRow"><td colspan="8" class="text-center" style="color:#999;padding:24px;">尚無航次資料</td></tr>';
+        }
+    }
+}
+
+function rowHtml(v) {
+    const badge = statusBadge[v.status] || 'badge-draft';
+    return `
+        <td><strong>${v.voyage_no}</strong></td>
+        <td>${shipMap[v.ship_id] || v.ship_id}</td>
+        <td>${v.port_of_loading || '-'}</td>
+        <td>${v.port_of_discharge || '-'}</td>
+        <td>${v.etd || '-'}</td>
+        <td>${v.eta || '-'}</td>
+        <td class="text-center"><span class="badge ${badge}">${v.status}</span></td>
+        <td class="text-center">
+            <button class="btn btn-warning btn-sm" onclick="openEditModal(${v.id},'${v.voyage_no}',${v.ship_id},'${v.port_of_loading||''}','${v.port_of_discharge||''}','${v.etd||''}','${v.eta||''}','${v.status}')">編輯</button>
+            <button class="btn btn-danger btn-sm" onclick="openDeleteModal(${v.id},'${v.voyage_no}')">刪除</button>
+        </td>`;
+}
+
+function appendRow(v) {
+    const tr = document.createElement('tr');
+    tr.id = `voyage-row-${v.id}`;
+    tr.innerHTML = rowHtml(v);
+    document.getElementById('voyageTableBody').appendChild(tr);
+}
+
+function updateRow(v) {
+    const tr = document.getElementById(`voyage-row-${v.id}`);
+    tr.innerHTML = rowHtml(v);
+}
+
+document.querySelectorAll('.modal-overlay').forEach(el => {
+    el.addEventListener('click', function(e) { if (e.target === this) this.classList.remove('active'); });
+});
+</script>
+
+{% endblock %}

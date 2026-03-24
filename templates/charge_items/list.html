@@ -1,0 +1,252 @@
+{% extends "base.html" %}
+{% block title %}收費項目管理{% endblock %}
+{% block content %}
+
+<div class="page-header">
+    <h1>💰 收費項目管理</h1>
+    <button class="btn btn-primary" onclick="openModal('addModal')">＋ 新增收費項目</button>
+</div>
+
+<!-- 清單 -->
+<div class="card">
+    <table>
+        <thead>
+            <tr>
+                <th>項目代碼</th>
+                <th>項目名稱</th>
+                <th>幣別</th>
+                <th class="text-right">預設單價</th>
+                <th class="text-center">操作</th>
+            </tr>
+        </thead>
+        <tbody id="itemTableBody">
+            {% for item in items %}
+            <tr id="item-row-{{ item.id }}">
+                <td><strong>{{ item.code }}</strong></td>
+                <td>{{ item.name }}</td>
+                <td>{{ item.currency }}</td>
+                <td class="text-right">{{ "{:,.2f}".format(item.default_unit_price) }}</td>
+                <td class="text-center">
+                    <button class="btn btn-warning btn-sm"
+                        onclick="openEditModal({{ item.id }},'{{ item.code }}','{{ item.name }}','{{ item.currency }}','{{ item.default_unit_price }}')">
+                        編輯
+                    </button>
+                    <button class="btn btn-danger btn-sm"
+                        onclick="openDeleteModal({{ item.id }},'{{ item.name }}')">
+                        刪除
+                    </button>
+                </td>
+            </tr>
+            {% else %}
+            <tr id="emptyRow"><td colspan="5" class="text-center" style="color:#999;padding:24px;">尚無收費項目資料</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- 新增 Modal -->
+<div class="modal-overlay" id="addModal">
+    <div class="modal">
+        <div class="modal-header">
+            <h2>新增收費項目</h2>
+            <button class="modal-close" onclick="closeModal('addModal')">✕</button>
+        </div>
+        <form id="addForm">
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>項目代碼 *</label>
+                    <input type="text" id="add_code" required maxlength="20" placeholder="例：PORT-FEE">
+                </div>
+                <div class="form-group">
+                    <label>項目名稱 *</label>
+                    <input type="text" id="add_name" required maxlength="100" placeholder="例：港口費">
+                </div>
+                <div class="form-group">
+                    <label>幣別</label>
+                    <select id="add_currency">
+                        {% for c in currencies %}
+                        <option value="{{ c }}" {% if c == 'TWD' %}selected{% endif %}>{{ c }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>預設單價</label>
+                    <input type="number" id="add_price" step="0.01" min="0" value="0">
+                </div>
+            </div>
+            <div id="addError" class="alert alert-error" style="display:none;margin-top:12px;"></div>
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">新增</button>
+                <button type="button" class="btn btn-secondary" onclick="closeModal('addModal')">取消</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- 編輯 Modal -->
+<div class="modal-overlay" id="editModal">
+    <div class="modal">
+        <div class="modal-header">
+            <h2>編輯收費項目</h2>
+            <button class="modal-close" onclick="closeModal('editModal')">✕</button>
+        </div>
+        <form id="editForm">
+            <input type="hidden" id="edit_id">
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>項目代碼（不可修改）</label>
+                    <input type="text" id="edit_code" disabled style="background:#f0f0f0;">
+                </div>
+                <div class="form-group">
+                    <label>項目名稱 *</label>
+                    <input type="text" id="edit_name" required maxlength="100">
+                </div>
+                <div class="form-group">
+                    <label>幣別</label>
+                    <select id="edit_currency">
+                        {% for c in currencies %}
+                        <option value="{{ c }}">{{ c }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>預設單價</label>
+                    <input type="number" id="edit_price" step="0.01" min="0">
+                </div>
+            </div>
+            <div id="editError" class="alert alert-error" style="display:none;margin-top:12px;"></div>
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">儲存</button>
+                <button type="button" class="btn btn-secondary" onclick="closeModal('editModal')">取消</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- 刪除確認 Modal -->
+<div class="modal-overlay" id="deleteModal">
+    <div class="modal" style="max-width:400px;">
+        <div class="modal-header">
+            <h2>確認刪除</h2>
+            <button class="modal-close" onclick="closeModal('deleteModal')">✕</button>
+        </div>
+        <p>確定要刪除收費項目「<strong id="deleteItemName"></strong>」嗎？</p>
+        <div id="deleteError" class="alert alert-error" style="display:none;margin-top:12px;"></div>
+        <div class="form-actions" style="margin-top:16px;">
+            <button class="btn btn-danger" onclick="confirmDelete()">確定刪除</button>
+            <button class="btn btn-secondary" onclick="closeModal('deleteModal')">取消</button>
+        </div>
+    </div>
+</div>
+
+<script>
+let deleteTargetId = null;
+
+function openModal(id) { document.getElementById(id).classList.add('active'); }
+function closeModal(id) {
+    document.getElementById(id).classList.remove('active');
+    ['addError','editError','deleteError'].forEach(function(e) {
+        var el = document.getElementById(e);
+        if (el) el.style.display = 'none';
+    });
+}
+
+function openEditModal(id, code, name, currency, price) {
+    document.getElementById('edit_id').value = id;
+    document.getElementById('edit_code').value = code;
+    document.getElementById('edit_name').value = name;
+    document.getElementById('edit_currency').value = currency;
+    document.getElementById('edit_price').value = price;
+    openModal('editModal');
+}
+
+function openDeleteModal(id, name) {
+    deleteTargetId = id;
+    document.getElementById('deleteItemName').textContent = name;
+    document.getElementById('deleteError').style.display = 'none';
+    openModal('deleteModal');
+}
+
+function fmtPrice(p) {
+    return parseFloat(p).toLocaleString('zh-TW', {minimumFractionDigits:2, maximumFractionDigits:2});
+}
+
+function rowHtml(item) {
+    return '<td><strong>' + item.code + '</strong></td>' +
+        '<td>' + item.name + '</td>' +
+        '<td>' + item.currency + '</td>' +
+        '<td class="text-right">' + fmtPrice(item.default_unit_price) + '</td>' +
+        '<td class="text-center">' +
+            '<button class="btn btn-warning btn-sm" onclick="openEditModal(' + item.id + ',\'' + item.code + '\',\'' + item.name + '\',\'' + item.currency + '\',\'' + item.default_unit_price + '\')">編輯</button> ' +
+            '<button class="btn btn-danger btn-sm" onclick="openDeleteModal(' + item.id + ',\'' + item.name + '\')">刪除</button>' +
+        '</td>';
+}
+
+document.getElementById('addForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    var body = new URLSearchParams({
+        code: document.getElementById('add_code').value,
+        name: document.getElementById('add_name').value,
+        currency: document.getElementById('add_currency').value,
+        default_unit_price: document.getElementById('add_price').value,
+    });
+    var res = await fetch('/charge-items/api', { method: 'POST', body: body });
+    var data = await res.json();
+    if (data.error) {
+        var el = document.getElementById('addError');
+        el.textContent = data.error; el.style.display = 'block';
+    } else {
+        closeModal('addModal');
+        document.getElementById('addForm').reset();
+        document.getElementById('add_price').value = '0';
+        var emptyRow = document.getElementById('emptyRow');
+        if (emptyRow) emptyRow.remove();
+        var tr = document.createElement('tr');
+        tr.id = 'item-row-' + data.id;
+        tr.innerHTML = rowHtml(data);
+        document.getElementById('itemTableBody').appendChild(tr);
+    }
+});
+
+document.getElementById('editForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    var id = document.getElementById('edit_id').value;
+    var body = new URLSearchParams({
+        name: document.getElementById('edit_name').value,
+        currency: document.getElementById('edit_currency').value,
+        default_unit_price: document.getElementById('edit_price').value,
+    });
+    var res = await fetch('/charge-items/api/' + id, { method: 'POST', body: body });
+    var data = await res.json();
+    if (data.error) {
+        var el = document.getElementById('editError');
+        el.textContent = data.error; el.style.display = 'block';
+    } else {
+        closeModal('editModal');
+        var tr = document.getElementById('item-row-' + data.id);
+        tr.innerHTML = rowHtml(data);
+    }
+});
+
+async function confirmDelete() {
+    var res = await fetch('/charge-items/api/' + deleteTargetId + '/delete', { method: 'POST' });
+    var data = await res.json();
+    if (data.error) {
+        var el = document.getElementById('deleteError');
+        el.textContent = data.error; el.style.display = 'block';
+    } else {
+        closeModal('deleteModal');
+        document.getElementById('item-row-' + deleteTargetId).remove();
+        if (!document.querySelector('#itemTableBody tr[id^="item-row"]')) {
+            document.getElementById('itemTableBody').innerHTML =
+                '<tr id="emptyRow"><td colspan="5" class="text-center" style="color:#999;padding:24px;">尚無收費項目資料</td></tr>';
+        }
+    }
+}
+
+document.querySelectorAll('.modal-overlay').forEach(function(el) {
+    el.addEventListener('click', function(e) { if (e.target === this) this.classList.remove('active'); });
+});
+</script>
+
+{% endblock %}

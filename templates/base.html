@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}船務部帳務系統{% endblock %}</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-brand">⚓ 船務部帳務系統</div>
+        <ul class="nav-links">
+            <li><a href="/invoices">帳務管理</a></li>
+            <li><a href="/voyages">航次管理</a></li>
+            <li><a href="/ships">船舶管理</a></li>
+            <li><a href="/charge-items">收費項目</a></li>
+        </ul>
+    </nav>
+
+    <div class="container">
+        {% if messages %}
+            {% for msg in messages %}
+            <div class="alert alert-{{ msg.type }}">{{ msg.text }}</div>
+            {% endfor %}
+        {% endif %}
+
+        {% block content %}{% endblock %}
+    </div>
+</body>
+</html>

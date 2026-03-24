@@ -1,0 +1,267 @@
+{% extends "base.html" %}
+{% block title %}船舶管理{% endblock %}
+{% block content %}
+
+<div class="page-header">
+    <h1>🚢 船舶管理</h1>
+    <button class="btn btn-primary" onclick="openModal('addModal')">＋ 新增船舶</button>
+</div>
+
+<div id="serverError" class="alert alert-error" style="display:none"></div>
+
+<!-- 清單 -->
+<div class="card">
+    <table>
+        <thead>
+            <tr>
+                <th>船舶代碼</th>
+                <th>船名</th>
+                <th>船旗國</th>
+                <th>船型</th>
+                <th class="text-center">操作</th>
+            </tr>
+        </thead>
+        <tbody id="shipTableBody">
+            {% for ship in ships %}
+            <tr id="ship-row-{{ ship.id }}">
+                <td><strong>{{ ship.code }}</strong></td>
+                <td>{{ ship.name }}</td>
+                <td>{{ ship.flag or '-' }}</td>
+                <td>{{ ship.ship_type or '-' }}</td>
+                <td class="text-center">
+                    <button class="btn btn-warning btn-sm"
+                        onclick="openEditModal({{ ship.id }}, '{{ ship.code }}', '{{ ship.name }}', '{{ ship.flag or '' }}', '{{ ship.ship_type or '' }}')">
+                        編輯
+                    </button>
+                    <button class="btn btn-danger btn-sm"
+                        onclick="openDeleteModal({{ ship.id }}, '{{ ship.name }}')">
+                        刪除
+                    </button>
+                </td>
+            </tr>
+            {% else %}
+            <tr id="emptyRow"><td colspan="5" class="text-center" style="color:#999; padding:24px;">尚無船舶資料</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- 新增 Modal -->
+<div class="modal-overlay" id="addModal">
+    <div class="modal">
+        <div class="modal-header">
+            <h2>新增船舶</h2>
+            <button class="modal-close" onclick="closeModal('addModal')">✕</button>
+        </div>
+        <form id="addForm">
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>船舶代碼 *</label>
+                    <input type="text" id="add_code" required maxlength="20" placeholder="例：EVER-GIVEN">
+                </div>
+                <div class="form-group">
+                    <label>船名 *</label>
+                    <input type="text" id="add_name" required maxlength="100" placeholder="例：長賜號">
+                </div>
+                <div class="form-group">
+                    <label>船旗國</label>
+                    <input type="text" id="add_flag" maxlength="50" placeholder="例：巴拿馬">
+                </div>
+                <div class="form-group">
+                    <label>船型</label>
+                    <input type="text" id="add_ship_type" maxlength="50" placeholder="例：貨櫃船">
+                </div>
+            </div>
+            <div id="addError" class="alert alert-error" style="display:none; margin-top:12px;"></div>
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">新增</button>
+                <button type="button" class="btn btn-secondary" onclick="closeModal('addModal')">取消</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- 編輯 Modal -->
+<div class="modal-overlay" id="editModal">
+    <div class="modal">
+        <div class="modal-header">
+            <h2>編輯船舶</h2>
+            <button class="modal-close" onclick="closeModal('editModal')">✕</button>
+        </div>
+        <form id="editForm">
+            <input type="hidden" id="edit_id">
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>船舶代碼（不可修改）</label>
+                    <input type="text" id="edit_code" disabled style="background:#f0f0f0;">
+                </div>
+                <div class="form-group">
+                    <label>船名 *</label>
+                    <input type="text" id="edit_name" required maxlength="100">
+                </div>
+                <div class="form-group">
+                    <label>船旗國</label>
+                    <input type="text" id="edit_flag" maxlength="50">
+                </div>
+                <div class="form-group">
+                    <label>船型</label>
+                    <input type="text" id="edit_ship_type" maxlength="50">
+                </div>
+            </div>
+            <div id="editError" class="alert alert-error" style="display:none; margin-top:12px;"></div>
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">儲存</button>
+                <button type="button" class="btn btn-secondary" onclick="closeModal('editModal')">取消</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- 刪除確認 Modal -->
+<div class="modal-overlay" id="deleteModal">
+    <div class="modal" style="max-width:400px;">
+        <div class="modal-header">
+            <h2>確認刪除</h2>
+            <button class="modal-close" onclick="closeModal('deleteModal')">✕</button>
+        </div>
+        <p>確定要刪除船舶「<strong id="deleteShipName"></strong>」嗎？</p>
+        <div id="deleteError" class="alert alert-error" style="display:none; margin-top:12px;"></div>
+        <div class="form-actions" style="margin-top:16px;">
+            <button class="btn btn-danger" onclick="confirmDelete()">確定刪除</button>
+            <button class="btn btn-secondary" onclick="closeModal('deleteModal')">取消</button>
+        </div>
+    </div>
+</div>
+
+<script>
+let deleteTargetId = null;
+
+function openModal(id) {
+    document.getElementById(id).classList.add('active');
+}
+function closeModal(id) {
+    document.getElementById(id).classList.remove('active');
+    document.getElementById(id).querySelector('form') &&
+        document.getElementById(id).querySelector('form').reset();
+    const err = document.getElementById(id.replace('Modal','') + 'Error') ||
+                document.getElementById('deleteError');
+    if (err) err.style.display = 'none';
+}
+
+function openEditModal(id, code, name, flag, ship_type) {
+    document.getElementById('edit_id').value = id;
+    document.getElementById('edit_code').value = code;
+    document.getElementById('edit_name').value = name;
+    document.getElementById('edit_flag').value = flag;
+    document.getElementById('edit_ship_type').value = ship_type;
+    document.getElementById('editError').style.display = 'none';
+    openModal('editModal');
+}
+
+function openDeleteModal(id, name) {
+    deleteTargetId = id;
+    document.getElementById('deleteShipName').textContent = name;
+    document.getElementById('deleteError').style.display = 'none';
+    openModal('deleteModal');
+}
+
+// 新增
+document.getElementById('addForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const body = new URLSearchParams({
+        code: document.getElementById('add_code').value,
+        name: document.getElementById('add_name').value,
+        flag: document.getElementById('add_flag').value,
+        ship_type: document.getElementById('add_ship_type').value,
+    });
+    const res = await fetch('/ships/api', { method: 'POST', body });
+    const data = await res.json();
+    if (data.error) {
+        const el = document.getElementById('addError');
+        el.textContent = data.error; el.style.display = 'block';
+    } else {
+        closeModal('addModal');
+        appendShipRow(data);
+        document.getElementById('emptyRow') && document.getElementById('emptyRow').remove();
+    }
+});
+
+// 編輯
+document.getElementById('editForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const id = document.getElementById('edit_id').value;
+    const body = new URLSearchParams({
+        name: document.getElementById('edit_name').value,
+        flag: document.getElementById('edit_flag').value,
+        ship_type: document.getElementById('edit_ship_type').value,
+    });
+    const res = await fetch(`/ships/api/${id}`, { method: 'POST', body });
+    const data = await res.json();
+    if (data.error) {
+        const el = document.getElementById('editError');
+        el.textContent = data.error; el.style.display = 'block';
+    } else {
+        closeModal('editModal');
+        updateShipRow(data);
+    }
+});
+
+// 刪除
+async function confirmDelete() {
+    const res = await fetch(`/ships/api/${deleteTargetId}/delete`, { method: 'POST' });
+    const data = await res.json();
+    if (data.error) {
+        const el = document.getElementById('deleteError');
+        el.textContent = data.error; el.style.display = 'block';
+    } else {
+        closeModal('deleteModal');
+        document.getElementById(`ship-row-${deleteTargetId}`).remove();
+        if (!document.querySelector('#shipTableBody tr')) {
+            document.getElementById('shipTableBody').innerHTML =
+                '<tr id="emptyRow"><td colspan="5" class="text-center" style="color:#999;padding:24px;">尚無船舶資料</td></tr>';
+        }
+    }
+}
+
+function appendShipRow(s) {
+    const tbody = document.getElementById('shipTableBody');
+    const tr = document.createElement('tr');
+    tr.id = `ship-row-${s.id}`;
+    tr.innerHTML = `
+        <td><strong>${s.code}</strong></td>
+        <td>${s.name}</td>
+        <td>${s.flag || '-'}</td>
+        <td>${s.ship_type || '-'}</td>
+        <td class="text-center">
+            <button class="btn btn-warning btn-sm"
+                onclick="openEditModal(${s.id},'${s.code}','${s.name}','${s.flag||''}','${s.ship_type||''}')">編輯</button>
+            <button class="btn btn-danger btn-sm"
+                onclick="openDeleteModal(${s.id},'${s.name}')">刪除</button>
+        </td>`;
+    tbody.appendChild(tr);
+}
+
+function updateShipRow(s) {
+    const tr = document.getElementById(`ship-row-${s.id}`);
+    tr.innerHTML = `
+        <td><strong>${s.code}</strong></td>
+        <td>${s.name}</td>
+        <td>${s.flag || '-'}</td>
+        <td>${s.ship_type || '-'}</td>
+        <td class="text-center">
+            <button class="btn btn-warning btn-sm"
+                onclick="openEditModal(${s.id},'${s.code}','${s.name}','${s.flag||''}','${s.ship_type||''}')">編輯</button>
+            <button class="btn btn-danger btn-sm"
+                onclick="openDeleteModal(${s.id},'${s.name}')">刪除</button>
+        </td>`;
+}
+
+// 點擊背景關閉
+document.querySelectorAll('.modal-overlay').forEach(el => {
+    el.addEventListener('click', function(e) {
+        if (e.target === this) this.classList.remove('active');
+    });
+});
+</script>
+
+{% endblock %}

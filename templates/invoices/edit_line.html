@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}編輯明細{% endblock %}
+{% block content %}
+
+<div class="page-header">
+    <h1>✏️ 編輯帳務明細</h1>
+    <a href="/invoices/{{ invoice.id }}" class="btn btn-secondary">← 返回帳單</a>
+</div>
+
+<div class="card">
+    <form method="post" action="/invoices/{{ invoice.id }}/lines/{{ line.id }}/edit">
+        <div class="form-grid">
+            <div class="form-group">
+                <label>收費項目 *</label>
+                <select name="charge_item_id" required onchange="fillDefaults(this)">
+                    {% for ci in charge_items %}
+                    <option value="{{ ci.id }}"
+                            data-price="{{ ci.default_unit_price }}"
+                            data-currency="{{ ci.currency }}"
+                            {% if ci.id == line.charge_item_id %}selected{% endif %}>
+                        {{ ci.code }} - {{ ci.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label>數量 *</label>
+                <input type="number" name="quantity" id="quantity" required
+                       step="0.0001" min="0.0001" value="{{ line.quantity }}">
+            </div>
+            <div class="form-group">
+                <label>單價 *</label>
+                <input type="number" name="unit_price" id="unitPrice" required
+                       step="0.01" min="0" value="{{ line.unit_price }}">
+            </div>
+            <div class="form-group">
+                <label>幣別</label>
+                <input type="text" name="currency" id="currency"
+                       maxlength="10" value="{{ line.currency }}">
+            </div>
+            <div class="form-group">
+                <label>備註</label>
+                <input type="text" name="remark" maxlength="200" value="{{ line.remark or '' }}">
+            </div>
+        </div>
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">儲存</button>
+            <a href="/invoices/{{ invoice.id }}" class="btn btn-secondary">取消</a>
+        </div>
+    </form>
+</div>
+
+<script>
+function fillDefaults(select) {
+    const opt = select.options[select.selectedIndex];
+    if (opt.value) {
+        document.getElementById('unitPrice').value = opt.dataset.price || '0';
+        document.getElementById('currency').value = opt.dataset.currency || 'TWD';
+    }
+}
+</script>
+
+{% endblock %}

@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% block title %}帳務管理{% endblock %}
+{% block content %}
+
+<div class="page-header">
+    <h1>📋 帳務管理</h1>
+    <a href="/invoices/new" class="btn btn-primary">＋ 新增帳單</a>
+</div>
+
+{% if request.query_params.get('error') %}
+<div class="alert alert-error">{{ request.query_params.get('error') }}</div>
+{% endif %}
+
+<!-- 篩選列 -->
+<form method="get" action="/invoices">
+    <div class="filter-bar">
+        <div class="form-group">
+            <label>航次</label>
+            <select name="voyage_id">
+                <option value="">全部航次</option>
+                {% for v in voyages %}
+                <option value="{{ v.id }}" {% if filter.voyage_id == v.id %}selected{% endif %}>
+                    {{ v.voyage_no }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-group">
+            <label>狀態</label>
+            <select name="status">
+                <option value="">全部狀態</option>
+                {% for s in statuses %}
+                <option value="{{ s }}" {% if filter.status == s %}selected{% endif %}>{{ s }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-group">
+            <label>帳單日期（起）</label>
+            <input type="date" name="date_from" value="{{ filter.date_from or '' }}">
+        </div>
+        <div class="form-group">
+            <label>帳單日期（迄）</label>
+            <input type="date" name="date_to" value="{{ filter.date_to or '' }}">
+        </div>
+        <div style="display:flex; gap:8px; align-items:flex-end;">
+            <button type="submit" class="btn btn-primary">篩選</button>
+            <a href="/invoices" class="btn btn-secondary">清除</a>
+        </div>
+    </div>
+</form>
+
+<!-- 清單 -->
+<div class="card">
+    <table>
+        <thead>
+            <tr>
+                <th>帳單編號</th>
+                <th>航次</th>
+                <th>客戶名稱</th>
+                <th>帳單日期</th>
+                <th class="text-right">總金額</th>
+                <th class="text-center">狀態</th>
+                <th class="text-center">操作</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for inv in invoices %}
+            <tr>
+                <td><strong>{{ inv.invoice_no }}</strong></td>
+                <td>{{ inv.voyage.voyage_no }}</td>
+                <td>{{ inv.customer_name }}</td>
+                <td>{{ inv.invoice_date.strftime('%Y-%m-%d') }}</td>
+                <td class="text-right">{{ "{:,.2f}".format(inv.total_amount) }}</td>
+                <td class="text-center">
+                    {% if inv.status == '草稿' %}
+                        <span class="badge badge-draft">{{ inv.status }}</span>
+                    {% elif inv.status == '已開立' %}
+                        <span class="badge badge-issued">{{ inv.status }}</span>
+                    {% else %}
+                        <span class="badge badge-paid">{{ inv.status }}</span>
+                    {% endif %}
+                </td>
+                <td class="text-center">
+                    <a href="/invoices/{{ inv.id }}" class="btn btn-primary btn-sm">開啟</a>
+                </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="7" class="text-center" style="color:#999; padding:24px;">尚無帳務資料</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% endblock %}

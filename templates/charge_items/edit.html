@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}編輯收費項目{% endblock %}
+{% block content %}
+
+<div class="page-header">
+    <h1>✏️ 編輯收費項目</h1>
+    <a href="/charge-items" class="btn btn-secondary">← 返回清單</a>
+</div>
+
+<div class="card">
+    <form method="post" action="/charge-items/{{ item.id }}/edit">
+        <div class="form-grid">
+            <div class="form-group">
+                <label>項目代碼（不可修改）</label>
+                <input type="text" value="{{ item.code }}" disabled style="background:#f0f0f0;">
+            </div>
+            <div class="form-group">
+                <label>項目名稱 *</label>
+                <input type="text" name="name" required value="{{ item.name }}">
+            </div>
+            <div class="form-group">
+                <label>幣別</label>
+                <select name="currency">
+                    {% for c in currencies %}
+                    <option value="{{ c }}" {% if c == item.currency %}selected{% endif %}>{{ c }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label>預設單價</label>
+                <input type="number" name="default_unit_price" step="0.01" min="0"
+                       value="{{ item.default_unit_price }}">
+            </div>
+        </div>
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">儲存</button>
+            <a href="/charge-items" class="btn btn-secondary">取消</a>
+        </div>
+    </form>
+</div>
+
+{% endblock %}

@@ -1,0 +1,188 @@
+{% extends "base.html" %}
+{% block title %}帳單 {{ invoice.invoice_no }}{% endblock %}
+{% block content %}
+
+<div class="page-header">
+    <h1>📄 帳單 {{ invoice.invoice_no }}</h1>
+    <div style="display:flex; gap:8px;">
+        <a href="/invoices/{{ invoice.id }}/export-csv" class="btn btn-success">⬇ 匯出 CSV</a>
+        <a href="/invoices/{{ invoice.id }}/print" class="btn btn-secondary" target="_blank">🖨 列印</a>
+        <a href="/invoices" class="btn btn-secondary">← 返回清單</a>
+    </div>
+</div>
+
+{% if request.query_params.get('error') %}
+<div class="alert alert-error">{{ request.query_params.get('error') }}</div>
+{% endif %}
+
+<!-- 帳單基本資訊 -->
+<div class="card">
+    <div class="invoice-meta">
+        <div class="meta-item">
+            <label>帳單編號</label>
+            <span>{{ invoice.invoice_no }}</span>
+        </div>
+        <div class="meta-item">
+            <label>客戶名稱</label>
+            <span>{{ invoice.customer_name }}</span>
+        </div>
+        <div class="meta-item">
+            <label>帳單日期</label>
+            <span>{{ invoice.invoice_date.strftime('%Y-%m-%d') }}</span>
+        </div>
+        <div class="meta-item">
+            <label>航次</label>
+            <span>{{ invoice.voyage.voyage_no }}</span>
+        </div>
+        <div class="meta-item">
+            <label>船舶</label>
+            <span>{{ invoice.voyage.ship.code }} - {{ invoice.voyage.ship.name }}</span>
+        </div>
+        <div class="meta-item">
+            <label>狀態</label>
+            <span>
+                {% if invoice.status == '草稿' %}
+                    <span class="badge badge-draft">{{ invoice.status }}</span>
+                {% elif invoice.status == '已開立' %}
+                    <span class="badge badge-issued">{{ invoice.status }}</span>
+                {% else %}
+                    <span class="badge badge-paid">{{ invoice.status }}</span>
+                {% endif %}
+            </span>
+        </div>
+    </div>
+
+    <!-- 狀態切換 -->
+    <div style="border-top:1px solid #e9ecef; padding-top:14px; margin-top:4px;">
+        <form method="post" action="/invoices/{{ invoice.id }}/status" style="display:flex; gap:8px; align-items:center;">
+            <label style="font-size:0.88rem; color:#555;">變更狀態：</label>
+            <select name="status" style="padding:6px 10px; border:1px solid #ced4da; border-radius:4px;">
+                {% for s in statuses %}
+                <option value="{{ s }}" {% if s == invoice.status %}selected{% endif %}>{{ s }}</option>
+                {% endfor %}
+            </select>
+            <button type="submit" class="btn btn-warning btn-sm">套用</button>
+        </form>
+    </div>
+</div>
+
+<!-- 帳務明細 -->
+<div class="card">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+        <h2 style="font-size:1rem; color:#1a3a5c;">帳務明細</h2>
+        {% if can_edit %}
+        <span style="font-size:0.82rem; color:#888;">草稿狀態可新增/編輯明細</span>
+        {% else %}
+        <span style="font-size:0.82rem; color:#dc3545;">⚠ 帳單已開立，明細不可修改</span>
+        {% endif %}
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>項目代碼</th>
+                <th>項目名稱</th>
+                <th class="text-right">數量</th>
+                <th class="text-right">單價</th>
+                <th>幣別</th>
+                <th class="text-right">小計</th>
+                <th>備註</th>
+                {% if can_edit %}<th class="text-center">操作</th>{% endif %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for line in invoice.lines %}
+            <tr>
+                <td>{{ line.charge_item.code }}</td>
+                <td>{{ line.charge_item.name }}</td>
+                <td class="text-right">{{ "{:,.4f}".format(line.quantity).rstrip('0').rstrip('.') }}</td>
+                <td class="text-right">{{ "{:,.2f}".format(line.unit_price) }}</td>
+                <td>{{ line.currency }}</td>
+                <td class="text-right"><strong>{{ "{:,.2f}".format(line.subtotal) }}</strong></td>
+                <td>{{ line.remark or '' }}</td>
+                {% if can_edit %}
+                <td class="text-center">
+                    <a href="/invoices/{{ invoice.id }}/lines/{{ line.id }}/edit"
+                       class="btn btn-warning btn-sm">編輯</a>
+                    <form method="post"
+                          action="/invoices/{{ invoice.id }}/lines/{{ line.id }}/delete"
+                          style="display:inline"
+                          onsubmit="return confirm('確定刪除此明細？')">
+                        <button type="submit" class="btn btn-danger btn-sm">刪除</button>
+                    </form>
+                </td>
+                {% endif %}
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="{{ 8 if can_edit else 7 }}" class="text-center"
+                    style="color:#999; padding:20px;">尚無明細</td>
+            </tr>
+            {% endfor %}
+            <tr class="total-row">
+                <td colspan="{{ 5 if can_edit else 4 }}" class="text-right">總計</td>
+                <td class="text-right">{{ "{:,.2f}".format(invoice.total_amount) }}</td>
+                <td></td>
+                {% if can_edit %}<td></td>{% endif %}
+            </tr>
+        </tbody>
+    </table>
+
+    <!-- 新增明細表單（草稿狀態才顯示） -->
+    {% if can_edit %}
+    <div style="border-top:1px solid #e9ecef; padding-top:16px; margin-top:8px;">
+        <h3 style="font-size:0.95rem; color:#1a3a5c; margin-bottom:12px;">新增明細</h3>
+        <form method="post" action="/invoices/{{ invoice.id }}/lines" id="addLineForm">
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>收費項目 *</label>
+                    <select name="charge_item_id" required id="chargeItemSelect"
+                            onchange="fillDefaults(this)">
+                        <option value="">-- 選擇收費項目 --</option>
+                        {% for ci in charge_items %}
+                        <option value="{{ ci.id }}"
+                                data-price="{{ ci.default_unit_price }}"
+                                data-currency="{{ ci.currency }}">
+                            {{ ci.code }} - {{ ci.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>數量 *</label>
+                    <input type="number" name="quantity" id="quantity" required
+                           step="0.0001" min="0.0001" value="1">
+                </div>
+                <div class="form-group">
+                    <label>單價 *</label>
+                    <input type="number" name="unit_price" id="unitPrice" required
+                           step="0.01" min="0" value="0">
+                </div>
+                <div class="form-group">
+                    <label>幣別</label>
+                    <input type="text" name="currency" id="currency" maxlength="10" value="TWD">
+                </div>
+                <div class="form-group">
+                    <label>備註</label>
+                    <input type="text" name="remark" maxlength="200">
+                </div>
+            </div>
+            <div class="form-actions">
+                <button type="submit" class="btn btn-success">新增明細</button>
+            </div>
+        </form>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+function fillDefaults(select) {
+    const opt = select.options[select.selectedIndex];
+    if (opt.value) {
+        document.getElementById('unitPrice').value = opt.dataset.price || '0';
+        document.getElementById('currency').value = opt.dataset.currency || 'TWD';
+    }
+}
+</script>
+
+{% endblock %}

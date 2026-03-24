@@ -333,6 +333,20 @@ def update_invoice_status(
     return RedirectResponse(url=f"/invoices/{invoice_id}", status_code=303)
 
 
+@router.post("/{invoice_id}/delete")
+def delete_invoice(invoice_id: int, db: Session = Depends(get_db)):
+    invoice = db.query(models.Invoice).filter(models.Invoice.id == invoice_id).first()
+    if not invoice:
+        return RedirectResponse(url="/invoices?error=帳單不存在", status_code=303)
+
+    if invoice.status != "草稿":
+        return RedirectResponse(url=f"/invoices/{invoice_id}?error=僅草稿狀態可刪除主檔", status_code=303)
+
+    db.delete(invoice)
+    db.commit()
+    return RedirectResponse(url="/invoices", status_code=303)
+
+
 @router.get("/{invoice_id}/print", response_class=HTMLResponse)
 def print_invoice(invoice_id: int, request: Request, db: Session = Depends(get_db)):
     invoice = db.query(models.Invoice).filter(models.Invoice.id == invoice_id).first()

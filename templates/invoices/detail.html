@@ -9,6 +9,14 @@
         <a href="/invoices/report/export-excel?voyage_id={{ invoice.voyage_id }}&status={{ invoice.status }}&date_from={{ invoice.invoice_date.strftime('%Y-%m-%d') }}&date_to={{ invoice.invoice_date.strftime('%Y-%m-%d') }}"
            class="btn btn-success">⬇ 匯出 Excel（同日同狀態）</a>
         <a href="/invoices/{{ invoice.id }}/print" class="btn btn-secondary" target="_blank">🖨 列印</a>
+        {% if can_edit %}
+        <form method="post"
+              action="/invoices/{{ invoice.id }}/delete"
+              style="display:inline"
+              onsubmit="return confirm('確定要刪除這張草稿帳單與其所有明細？');">
+            <button type="submit" class="btn btn-danger">🗑 刪除主檔</button>
+        </form>
+        {% endif %}
         <a href="/invoices" class="btn btn-secondary">← 返回清單</a>
     </div>
 </div>

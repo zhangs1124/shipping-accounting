@@ -9,7 +9,7 @@
         <a href="/invoices/report/export-excel?voyage_id={{ invoice.voyage_id }}&status={{ invoice.status }}&date_from={{ invoice.invoice_date.strftime('%Y-%m-%d') }}&date_to={{ invoice.invoice_date.strftime('%Y-%m-%d') }}"
            class="btn btn-success">⬇ 匯出 Excel（同日同狀態）</a>
         <a href="/invoices/{{ invoice.id }}/print" class="btn btn-secondary" target="_blank">🖨 列印</a>
-        {% if can_edit %}
+        {% if can_edit and not invoice.lines %}
         <form method="post"
               action="/invoices/{{ invoice.id }}/delete"
               style="display:inline"
@@ -81,7 +81,11 @@
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
         <h2 style="font-size:1rem; color:#1a3a5c;">帳務明細</h2>
         {% if can_edit %}
-        <span style="font-size:0.82rem; color:#888;">草稿狀態可新增/編輯明細</span>
+        {% if invoice.lines %}
+        <span style="font-size:0.82rem; color:#888;">草稿狀態可新增/編輯明細；需先刪除全部明細才可刪主檔</span>
+        {% else %}
+        <span style="font-size:0.82rem; color:#888;">草稿狀態可新增/編輯明細；目前可刪主檔</span>
+        {% endif %}
         {% else %}
         <span style="font-size:0.82rem; color:#dc3545;">⚠ 帳單已開立，明細不可修改</span>
         {% endif %}

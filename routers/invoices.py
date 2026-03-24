@@ -342,6 +342,9 @@ def delete_invoice(invoice_id: int, db: Session = Depends(get_db)):
     if invoice.status != "草稿":
         return RedirectResponse(url=f"/invoices/{invoice_id}?error=僅草稿狀態可刪除主檔", status_code=303)
 
+    if invoice.lines:
+        return RedirectResponse(url=f"/invoices/{invoice_id}?error=請先刪除所有明細，才可刪除主檔", status_code=303)
+
     db.delete(invoice)
     db.commit()
     return RedirectResponse(url="/invoices", status_code=303)

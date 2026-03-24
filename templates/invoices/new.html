@@ -16,9 +16,8 @@
         <div class="form-grid">
             <div class="form-group">
                 <label>帳單編號 *</label>
-                <input type="text" name="invoice_no" required maxlength="30"
-                       value="{{ form_data.invoice_no if form_data else '' }}"
-                       placeholder="例：INV-2024-001">
+                <input type="text" value="{{ suggested_invoice_no }}" readonly>
+                <small>系統自動編號（格式：AYYYYMMDD-001）</small>
             </div>
             <div class="form-group">
                 <label>航次 *</label>
@@ -40,7 +39,7 @@
             <div class="form-group">
                 <label>帳單日期 *</label>
                 <input type="date" name="invoice_date" required
-                       value="{{ form_data.invoice_date if form_data else '' }}">
+                       value="{{ form_data.invoice_date if form_data else today_str }}">
             </div>
         </div>
         <div class="form-actions">

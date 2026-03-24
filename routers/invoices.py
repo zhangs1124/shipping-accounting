@@ -1,11 +1,13 @@
-from fastapi import APIRouter, Depends, Request, Form
+from fastapi import APIRouter, Depends, Request, Form, HTTPException
 from fastapi.responses import HTMLResponse, RedirectResponse, StreamingResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import IntegrityError
 from typing import Optional
 from datetime import date
 import csv
 import io
+import re
 
 import models
 from database import get_db
@@ -14,6 +16,23 @@ router = APIRouter(prefix="/invoices", tags=["invoices"])
 templates = Jinja2Templates(directory="templates")
 
 INVOICE_STATUSES = ["草稿", "已開立", "已收款"]
+
+
+def generate_invoice_no(db: Session, invoice_date: date) -> str:
+    prefix = f"A{invoice_date.strftime('%Y%m%d')}-"
+    pattern = re.compile(rf"^A{invoice_date.strftime('%Y%m%d')}\-(\d{{3}})$")
+    existing_nos = (
+        db.query(models.Invoice.invoice_no)
+        .filter(models.Invoice.invoice_no.like(f"{prefix}%"))
+        .all()
+    )
+
+    max_seq = 0
+    for (invoice_no,) in existing_nos:
+        m = pattern.match(invoice_no)
+        if m:
+            max_seq = max(max_seq, int(m.group(1)))
+    return f"{prefix}{max_seq + 1:03d}"
 
 
 @router.get("", response_class=HTMLResponse)
@@ -55,46 +74,57 @@ def list_invoices(
 @router.get("/new", response_class=HTMLResponse)
 def new_invoice_form(request: Request, db: Session = Depends(get_db)):
     voyages = db.query(models.Voyage).order_by(models.Voyage.voyage_no).all()
+    today = date.today()
     return templates.TemplateResponse("invoices/new.html", {
         "request": request,
         "voyages": voyages,
+        "suggested_invoice_no": generate_invoice_no(db, today),
+        "today_str": today.isoformat(),
     })
 
 
 @router.post("")
 def create_invoice(
     request: Request,
-    invoice_no: str = Form(...),
     voyage_id: int = Form(...),
     customer_name: str = Form(...),
     invoice_date: str = Form(...),
     db: Session = Depends(get_db),
 ):
-    existing = db.query(models.Invoice).filter(models.Invoice.invoice_no == invoice_no).first()
-    if existing:
-        voyages = db.query(models.Voyage).order_by(models.Voyage.voyage_no).all()
-        return templates.TemplateResponse("invoices/new.html", {
-            "request": request,
-            "voyages": voyages,
-            "error": f"帳單編號 '{invoice_no}' 已存在",
-            "form_data": {
-                "invoice_no": invoice_no, "voyage_id": voyage_id,
-                "customer_name": customer_name, "invoice_date": invoice_date,
-            },
-        }, status_code=409)
+    invoice_dt = date.fromisoformat(invoice_date)
+    for _ in range(5):
+        invoice_no = generate_invoice_no(db, invoice_dt)
+        invoice = models.Invoice(
+            invoice_no=invoice_no,
+            voyage_id=voyage_id,
+            customer_name=customer_name,
+            invoice_date=invoice_dt,
+            status="草稿",
+            total_amount=0,
+        )
+        db.add(invoice)
+        try:
+            db.commit()
+            db.refresh(invoice)
+            return RedirectResponse(url=f"/invoices/{invoice.id}", status_code=303)
+        except IntegrityError:
+            # Unique key collision can happen when multiple users create at the same time.
+            db.rollback()
+            continue
 
-    invoice = models.Invoice(
-        invoice_no=invoice_no,
-        voyage_id=voyage_id,
-        customer_name=customer_name,
-        invoice_date=date.fromisoformat(invoice_date),
-        status="草稿",
-        total_amount=0,
-    )
-    db.add(invoice)
-    db.commit()
-    db.refresh(invoice)
-    return RedirectResponse(url=f"/invoices/{invoice.id}", status_code=303)
+    voyages = db.query(models.Voyage).order_by(models.Voyage.voyage_no).all()
+    return templates.TemplateResponse("invoices/new.html", {
+        "request": request,
+        "voyages": voyages,
+        "error": "系統忙碌中，請稍後重試建立帳單",
+        "form_data": {
+            "voyage_id": voyage_id,
+            "customer_name": customer_name,
+            "invoice_date": invoice_date,
+        },
+        "suggested_invoice_no": generate_invoice_no(db, invoice_dt),
+        "today_str": date.today().isoformat(),
+    }, status_code=409)
 
 
 @router.get("/{invoice_id}", response_class=HTMLResponse)

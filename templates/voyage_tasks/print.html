@@ -101,15 +101,27 @@
         }
 
         @media print {
-            body { padding: 0; }
+            body { 
+                padding: 0; 
+                margin: 0;
+            }
             .no-print-area { display: none; }
             .master-info { border: 1px solid #000; background: none; }
-            th { -webkit-print-color-adjust: exact; background-color: #eee !important; }
+            th { 
+                -webkit-print-color-adjust: exact; 
+                print-color-adjust: exact;
+                background-color: #eee !important; 
+            }
+            table {
+                width: 100%;
+                table-layout: fixed; /* 固定寬度防止跑版 */
+                word-wrap: break-word; /* 避免文字撐開表格 */
+            }
         }
 
         @page {
             size: A4;
-            margin: 0; /* 設為 0 可嘗試隱藏瀏覽器預設頁首頁尾 (如網址、日期) */
+            margin: 1cm; /* 改回 1cm 確保左右有緩衝空間，不會貼齊邊緣導致格線消失 */
         }
     </style>
 </head>

@@ -32,6 +32,8 @@ def new_customer_form(request: Request):
 def create_customer(
     request: Request,
     name: str = Form(...),
+    responsible: str = Form(""),
+    invoice_prefix: str = Form("A"),
     contact: str = Form(""),
     phone: str = Form(""),
     email: str = Form(""),
@@ -45,6 +47,8 @@ def create_customer(
             "error": f"客戶名稱 '{name}' 已存在",
             "form_data": {
                 "name": name,
+                "responsible": responsible,
+                "invoice_prefix": invoice_prefix,
                 "contact": contact,
                 "phone": phone,
                 "email": email,
@@ -54,6 +58,8 @@ def create_customer(
 
     customer = models.Customer(
         name=name,
+        responsible=responsible or None,
+        invoice_prefix=invoice_prefix or "A",
         contact=contact or None,
         phone=phone or None,
         email=email or None,
@@ -81,6 +87,8 @@ def update_customer(
     customer_id: int,
     request: Request,
     name: str = Form(...),
+    responsible: str = Form(""),
+    invoice_prefix: str = Form("A"),
     contact: str = Form(""),
     phone: str = Form(""),
     email: str = Form(""),
@@ -104,6 +112,8 @@ def update_customer(
         }, status_code=409)
 
     customer.name = name
+    customer.responsible = responsible or None
+    customer.invoice_prefix = invoice_prefix or "A"
     customer.contact = contact or None
     customer.phone = phone or None
     customer.email = email or None
@@ -111,6 +121,41 @@ def update_customer(
 
     db.commit()
     return RedirectResponse(url="/customers", status_code=303)
+
+
+@router.post("/api")
+def api_create_customer(
+    name: str = Form(...),
+    responsible: str = Form(""),
+    invoice_prefix: str = Form("A"),
+    contact: str = Form(""),
+    phone: str = Form(""),
+    email: str = Form(""),
+    address: str = Form(""),
+    db: Session = Depends(get_db),
+):
+    existing = db.query(models.Customer).filter(models.Customer.name == name).first()
+    if existing:
+        return {"error": f"客戶名稱 '{name}' 已存在"}
+
+    customer = models.Customer(
+        name=name,
+        responsible=responsible or None,
+        invoice_prefix=invoice_prefix or "A",
+        contact=contact or None,
+        phone=phone or None,
+        email=email or None,
+        address=address or None,
+    )
+    db.add(customer)
+    db.commit()
+    db.refresh(customer)
+    return {
+        "id": customer.id,
+        "name": customer.name,
+        "responsible": customer.responsible or "",
+        "invoice_prefix": customer.invoice_prefix or "A",
+    }
 
 
 @router.post("/{customer_id}/delete")

@@ -18,6 +18,8 @@
         <thead>
             <tr>
                 <th>客戶名稱</th>
+                <th>負責人</th>
+                <th>發票前綴</th>
                 <th>聯絡人</th>
                 <th>電話</th>
                 <th>電子信箱</th>
@@ -28,6 +30,8 @@
             {% for c in customers %}
             <tr>
                 <td><strong>{{ c.name }}</strong></td>
+                <td>{{ c.responsible or '' }}</td>
+                <td>{{ c.invoice_prefix or 'A' }}</td>
                 <td>{{ c.contact or '' }}</td>
                 <td>{{ c.phone or '' }}</td>
                 <td>{{ c.email or '' }}</td>

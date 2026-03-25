@@ -21,9 +21,11 @@ templates = Jinja2Templates(directory="templates")
 INVOICE_STATUSES = ["草稿", "已開立", "已收款"]
 
 
-def generate_invoice_no(db: Session, invoice_date: date) -> str:
-    prefix = f"A{invoice_date.strftime('%Y%m%d')}-"
-    pattern = re.compile(rf"^A{invoice_date.strftime('%Y%m%d')}\-(\d{{3}})$")
+def generate_invoice_no(db: Session, invoice_date: date, invoice_prefix: str) -> str:
+    invoice_prefix = (invoice_prefix or "A").strip()
+    base = invoice_date.strftime('%Y%m%d')
+    prefix = f"{invoice_prefix}{base}-"
+    pattern = re.compile(rf"^{re.escape(invoice_prefix)}{base}\-(\d{{3}})$")
     existing_nos = (
         db.query(models.Invoice.invoice_no)
         .filter(models.Invoice.invoice_no.like(f"{prefix}%"))
@@ -249,31 +251,59 @@ def export_invoice_report_excel(
 @router.get("/new", response_class=HTMLResponse)
 def new_invoice_form(request: Request, db: Session = Depends(get_db)):
     voyages = db.query(models.Voyage).order_by(models.Voyage.voyage_no).all()
+    customers = db.query(models.Customer).order_by(models.Customer.name).all()
     today = date.today()
+    default_prefix = customers[0].invoice_prefix if customers else "A"
     return templates.TemplateResponse("invoices/new.html", {
         "request": request,
         "voyages": voyages,
-        "suggested_invoice_no": generate_invoice_no(db, today),
+        "customers": customers,
+        "suggested_invoice_no": generate_invoice_no(db, today, default_prefix),
         "today_str": today.isoformat(),
     })
+
+
+@router.get("/suggest-invoice-no")
+def suggest_invoice_no(customer_id: int, invoice_date: str, db: Session = Depends(get_db)):
+    customer = db.query(models.Customer).filter(models.Customer.id == customer_id).first()
+    if not customer:
+        raise HTTPException(status_code=404, detail="客戶不存在")
+    invoice_dt = date.fromisoformat(invoice_date)
+    invoice_no = generate_invoice_no(db, invoice_dt, customer.invoice_prefix)
+    return {"invoice_no": invoice_no}
 
 
 @router.post("")
 def create_invoice(
     request: Request,
     voyage_id: int = Form(...),
-    customer_name: str = Form(...),
+    customer_id: int = Form(...),
     invoice_date: str = Form(...),
     db: Session = Depends(get_db),
 ):
     invoice_dt = date.fromisoformat(invoice_date)
+    customer = db.query(models.Customer).filter(models.Customer.id == customer_id).first()
+    if not customer:
+        voyages = db.query(models.Voyage).order_by(models.Voyage.voyage_no).all()
+        customers = db.query(models.Customer).order_by(models.Customer.name).all()
+        default_prefix = customers[0].invoice_prefix if customers else "A"
+        return templates.TemplateResponse("invoices/new.html", {
+            "request": request,
+            "voyages": voyages,
+            "customers": customers,
+            "error": "客戶不存在",
+            "suggested_invoice_no": generate_invoice_no(db, invoice_dt, default_prefix),
+            "today_str": date.today().isoformat(),
+        }, status_code=404)
+
     for _ in range(5):
-        invoice_no = generate_invoice_no(db, invoice_dt)
+        invoice_no = generate_invoice_no(db, invoice_dt, customer.invoice_prefix)
         invoice = models.Invoice(
             invoice_no=invoice_no,
             voyage_id=voyage_id,
-            customer_name=customer_name,
+            customer_name=customer.name,
             invoice_date=invoice_dt,
+            responsible=customer.responsible or "",
             status="草稿",
             total_amount=0,
         )
@@ -288,16 +318,18 @@ def create_invoice(
             continue
 
     voyages = db.query(models.Voyage).order_by(models.Voyage.voyage_no).all()
+    customers = db.query(models.Customer).order_by(models.Customer.name).all()
     return templates.TemplateResponse("invoices/new.html", {
         "request": request,
         "voyages": voyages,
+        "customers": customers,
         "error": "系統忙碌中，請稍後重試建立帳單",
         "form_data": {
             "voyage_id": voyage_id,
-            "customer_name": customer_name,
+            "customer_id": customer_id,
             "invoice_date": invoice_date,
         },
-        "suggested_invoice_no": generate_invoice_no(db, invoice_dt),
+        "suggested_invoice_no": generate_invoice_no(db, invoice_dt, customer.invoice_prefix),
         "today_str": date.today().isoformat(),
     }, status_code=409)
 
@@ -348,13 +380,17 @@ def duplicate_invoice(
         return RedirectResponse(url=f"/invoices/{invoice_id}?error=來源帳單無明細，無法套用", status_code=303)
 
     invoice_dt = date.fromisoformat(new_invoice_date)
+    cust = db.query(models.Customer).filter(models.Customer.name == source.customer_name).first()
+    invoice_prefix = cust.invoice_prefix if cust else "A"
+    responsible = (cust.responsible if cust and cust.responsible else source.responsible) or ""
     for _ in range(5):
-        new_invoice_no = generate_invoice_no(db, invoice_dt)
+        new_invoice_no = generate_invoice_no(db, invoice_dt, invoice_prefix)
         new_invoice = models.Invoice(
             invoice_no=new_invoice_no,
             voyage_id=source.voyage_id,
             customer_name=source.customer_name,
             invoice_date=invoice_dt,
+            responsible=responsible,
             status="草稿",
             total_amount=0,
         )

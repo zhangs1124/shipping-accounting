@@ -42,6 +42,10 @@
             <span>{{ invoice.customer_name }}</span>
         </div>
         <div class="meta-item">
+            <label>負責人</label>
+            <span>{{ invoice.responsible or '' }}</span>
+        </div>
+        <div class="meta-item">
             <label>帳單日期</label>
             <span>{{ invoice.invoice_date.strftime('%Y-%m-%d') }}</span>
         </div>

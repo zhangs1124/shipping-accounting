@@ -54,6 +54,8 @@ class Customer(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, unique=True, nullable=False, index=True)
+    responsible = Column(String)
+    invoice_prefix = Column(String, default="A", nullable=False)
     contact = Column(String)
     phone = Column(String)
     email = Column(String)
@@ -71,6 +73,7 @@ class Invoice(Base):
     customer_name = Column(String, nullable=False)
     invoice_date = Column(Date, nullable=False)
     status = Column(String, default="草稿")  # 草稿/已開立/已收款
+    responsible = Column(String)  # 發票/帳務負責人（從客戶帶入）
     total_amount = Column(Numeric(18, 2), default=0)
     created_at = Column(DateTime, default=func.now())
     updated_at = Column(DateTime, default=func.now(), onupdate=func.now())

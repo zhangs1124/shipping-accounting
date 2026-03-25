@@ -42,6 +42,7 @@
     <div class="meta-item"><label>帳單編號：</label><span>{{ invoice.invoice_no }}</span></div>
     <div class="meta-item"><label>帳單日期：</label><span>{{ invoice.invoice_date.strftime('%Y-%m-%d') }}</span></div>
     <div class="meta-item"><label>客戶名稱：</label><span>{{ invoice.customer_name }}</span></div>
+    <div class="meta-item"><label>負責人：</label><span>{{ invoice.responsible or '' }}</span></div>
     <div class="meta-item"><label>狀態：</label><span>{{ invoice.status }}</span></div>
     <div class="meta-item"><label>航次編號：</label><span>{{ invoice.voyage.voyage_no }}</span></div>
     <div class="meta-item"><label>船舶：</label><span>{{ invoice.voyage.ship.code }} - {{ invoice.voyage.ship.name }}</span></div>

@@ -16,7 +16,7 @@
         <div class="form-grid">
             <div class="form-group">
                 <label>帳單編號 *</label>
-                <input type="text" value="{{ suggested_invoice_no }}" readonly>
+                <input type="text" id="invoiceNoInput" value="{{ suggested_invoice_no }}" readonly>
                 <small>系統自動編號（格式：AYYYYMMDD-001）</small>
             </div>
             <div class="form-group">
@@ -32,13 +32,26 @@
                 </select>
             </div>
             <div class="form-group">
-                <label>客戶名稱 *</label>
-                <input type="text" name="customer_name" required maxlength="100"
-                       value="{{ form_data.customer_name if form_data else '' }}">
+                <label>客戶 *</label>
+                <select name="customer_id" id="customerSelect" required {% if not customers %}disabled{% endif %}>
+                    <option value="">-- 選擇客戶 --</option>
+                    {% for c in customers %}
+                    <option value="{{ c.id }}"
+                        {% if form_data and form_data.customer_id == c.id %}selected{% endif %}>
+                        {{ c.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+                <button type="button"
+                        class="btn btn-secondary btn-sm"
+                        onclick="openCustomerModal()"
+                        {% if not customers %}style=\"margin-top:8px\"{% endif %}>
+                    ＋ 新增客戶
+                </button>
             </div>
             <div class="form-group">
                 <label>帳單日期 *</label>
-                <input type="date" name="invoice_date" required
+                <input type="date" name="invoice_date" id="invoiceDate" required
                        value="{{ form_data.invoice_date if form_data else today_str }}">
             </div>
         </div>
@@ -48,5 +61,121 @@
         </div>
     </form>
 </div>
+
+{% if customers is not none %}
+<div class="modal-overlay" id="customerModal">
+    <div class="modal">
+        <div class="modal-header">
+            <h2>新增客戶</h2>
+            <button type="button" class="modal-close" onclick="closeCustomerModal()">&times;</button>
+        </div>
+        <form id="customerModalForm" onsubmit="return false;">
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>客戶名稱 *</label>
+                    <input type="text" name="name" id="cust_name" required maxlength="150">
+                </div>
+                <div class="form-group">
+                    <label>負責人</label>
+                    <input type="text" name="responsible" id="cust_responsible" maxlength="100">
+                </div>
+                <div class="form-group">
+                    <label>發票前綴</label>
+                    <input type="text" name="invoice_prefix" id="cust_prefix" maxlength="10" value="A">
+                </div>
+                <div class="form-group">
+                    <label>聯絡人</label>
+                    <input type="text" name="contact" id="cust_contact" maxlength="100">
+                </div>
+                <div class="form-group">
+                    <label>電話</label>
+                    <input type="text" name="phone" id="cust_phone" maxlength="50">
+                </div>
+                <div class="form-group">
+                    <label>電子信箱</label>
+                    <input type="text" name="email" id="cust_email" maxlength="100">
+                </div>
+                <div class="form-group" style="grid-column: 1 / -1;">
+                    <label>地址</label>
+                    <input type="text" name="address" id="cust_address" maxlength="250">
+                </div>
+            </div>
+            <div id="customerModalError" class="alert alert-error" style="display:none; margin-top:12px;"></div>
+            <div class="form-actions">
+                <button type="button" class="btn btn-primary" onclick="submitCustomer()">建立</button>
+                <button type="button" class="btn btn-secondary" onclick="closeCustomerModal()">取消</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function openCustomerModal() {
+    const modal = document.getElementById('customerModal');
+    document.getElementById('customerModalError').style.display = 'none';
+    modal.classList.add('active');
+    // 預設值
+    document.getElementById('cust_prefix').value = 'A';
+}
+
+function closeCustomerModal() {
+    document.getElementById('customerModal').classList.remove('active');
+}
+
+async function submitCustomer() {
+    const formError = document.getElementById('customerModalError');
+    formError.style.display = 'none';
+    const body = new URLSearchParams({
+        name: document.getElementById('cust_name').value,
+        responsible: document.getElementById('cust_responsible').value,
+        invoice_prefix: document.getElementById('cust_prefix').value,
+        contact: document.getElementById('cust_contact').value,
+        phone: document.getElementById('cust_phone').value,
+        email: document.getElementById('cust_email').value,
+        address: document.getElementById('cust_address').value,
+    });
+
+    const res = await fetch('/customers/api', { method: 'POST', body });
+    const data = await res.json();
+    if (data.error) {
+        formError.textContent = data.error;
+        formError.style.display = 'block';
+        return;
+    }
+
+    const select = document.getElementById('customerSelect');
+    const opt = document.createElement('option');
+    opt.value = data.id;
+    opt.textContent = data.name;
+    select.appendChild(opt);
+    select.value = data.id;
+    select.disabled = false;
+
+    closeCustomerModal();
+    refreshSuggestedInvoiceNo();
+}
+
+async function refreshSuggestedInvoiceNo() {
+    const customerId = document.getElementById('customerSelect').value;
+    const invoiceDate = document.getElementById('invoiceDate').value;
+    if (!customerId || !invoiceDate) return;
+    const res = await fetch(`/invoices/suggest-invoice-no?customer_id=${customerId}&invoice_date=${invoiceDate}`);
+    const data = await res.json();
+    if (data.invoice_no) document.getElementById('invoiceNoInput').value = data.invoice_no;
+}
+
+document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') closeCustomerModal();
+});
+
+window.addEventListener('load', function () {
+    const select = document.getElementById('customerSelect');
+    const dateInput = document.getElementById('invoiceDate');
+    if (select) select.addEventListener('change', refreshSuggestedInvoiceNo);
+    if (dateInput) dateInput.addEventListener('change', refreshSuggestedInvoiceNo);
+    refreshSuggestedInvoiceNo();
+});
+</script>
+{% endif %}
 
 {% endblock %}

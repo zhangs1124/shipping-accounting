@@ -15,7 +15,7 @@ def list_task_categories(request: Request, db: Session = Depends(get_db)):
     """
     列出所有進出港項目基本檔。
     """
-    categories = db.query(models.TaskCategory).order_by(models.TaskCategory.task_group, models.TaskCategory.display_order).all()
+    categories = db.query(models.TaskCategory).order_by(models.TaskCategory.display_order, models.TaskCategory.task_group).all()
     return templates.TemplateResponse("task_categories/list.html", {"request": request, "categories": categories})
 
 @router.post("/api")

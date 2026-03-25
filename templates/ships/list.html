@@ -14,8 +14,8 @@
     <table>
         <thead>
             <tr>
-                <th>船舶代碼</th>
                 <th>船名</th>
+                <th>船舶代碼</th>
                 <th>船旗國</th>
                 <th>船型</th>
                 <th class="text-center">操作</th>
@@ -24,8 +24,8 @@
         <tbody id="shipTableBody">
             {% for ship in ships %}
             <tr id="ship-row-{{ ship.id }}">
-                <td><strong>{{ ship.code }}</strong></td>
-                <td>{{ ship.name }}</td>
+                <td><strong>{{ ship.name }}</strong></td>
+                <td>{{ ship.code }}</td>
                 <td>{{ ship.flag or '-' }}</td>
                 <td>{{ ship.ship_type or '-' }}</td>
                 <td class="text-center">
@@ -228,8 +228,8 @@ function appendShipRow(s) {
     const tr = document.createElement('tr');
     tr.id = `ship-row-${s.id}`;
     tr.innerHTML = `
-        <td><strong>${s.code}</strong></td>
-        <td>${s.name}</td>
+        <td><strong>${s.name}</strong></td>
+        <td>${s.code}</td>
         <td>${s.flag || '-'}</td>
         <td>${s.ship_type || '-'}</td>
         <td class="text-center">
@@ -244,8 +244,8 @@ function appendShipRow(s) {
 function updateShipRow(s) {
     const tr = document.getElementById(`ship-row-${s.id}`);
     tr.innerHTML = `
-        <td><strong>${s.code}</strong></td>
-        <td>${s.name}</td>
+        <td><strong>${s.name}</strong></td>
+        <td>${s.code}</td>
         <td>${s.flag || '-'}</td>
         <td>${s.ship_type || '-'}</td>
         <td class="text-center">

@@ -119,8 +119,8 @@ def create_voyage_task(
         categories = db.query(models.TaskCategory).filter(
             models.TaskCategory.is_active == 1
         ).order_by(
-            models.TaskCategory.task_group,
             models.TaskCategory.display_order,
+            models.TaskCategory.task_group,
             models.TaskCategory.name
         ).all()
         for cat in categories:
@@ -156,8 +156,8 @@ def detail_voyage_tasks(
         .join(models.TaskCategory)
         .filter(models.VoyageTaskLog.voyage_id == voyage_id)
         .order_by(
-            models.TaskCategory.task_group,
             models.TaskCategory.display_order,
+            models.TaskCategory.task_group,
             models.TaskCategory.name
         )
         .all()

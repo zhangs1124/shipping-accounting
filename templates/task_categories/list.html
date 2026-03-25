@@ -9,7 +9,7 @@
 
 <!-- 清單 -->
 <div class="card">
-    <table>
+    <table id="categoryTable">
         <thead>
             <tr>
                 <th>項目名稱</th>
@@ -165,6 +165,45 @@
 </div>
 
 <script>
+let deleteTargetId = null;
+let dataTable = null;
+
+$(document).ready(function() {
+    dataTable = $('#categoryTable').DataTable({
+        "language": {
+            "url": "https://cdn.datatables.net/plug-ins/1.13.7/i18n/zh-HANT.json"
+        },
+        "pageLength": 50,
+        "order": [[3, 'asc']], // 依顯示順序
+        "columnDefs": [
+            { "orderable": false, "targets": [5] }
+        ]
+    });
+});
+
+function openModal(id) {
+    document.getElementById(id).classList.add('active');
+}
+function closeModal(id) {
+    document.getElementById(id).classList.remove('active');
+    // 重設表單與錯誤訊息
+    const form = document.getElementById(id).querySelector('form');
+    if (form) form.reset();
+    const errAdd = document.getElementById('addError');
+    const errEdit = document.getElementById('editError');
+    const errDel = document.getElementById('deleteError');
+    if (errAdd) errAdd.style.display = 'none';
+    if (errEdit) errEdit.style.display = 'none';
+    if (errDel) errDel.style.display = 'none';
+}
+
+// 點擊背景關閉
+document.querySelectorAll('.modal-overlay').forEach(el => {
+    el.addEventListener('click', function(e) {
+        if (e.target === this) closeModal(this.id);
+    });
+});
+
 // 輔助函式：產生表格列內容
 function getRowContent(cat) {
     const groupColors = {
@@ -243,13 +282,10 @@ document.getElementById('addForm').addEventListener('submit', async function(e) 
         el.textContent = data.error; el.style.display = 'block';
     } else {
         closeModal('addModal');
-        const emptyRow = document.getElementById('emptyRow');
-        if (emptyRow) emptyRow.remove();
-        
         const tr = document.createElement('tr');
         tr.id = `category-row-${data.id}`;
         tr.innerHTML = getRowContent(data);
-        document.getElementById('categoryTableBody').appendChild(tr);
+        const addedRow = dataTable.row.add(tr).draw(false).node();
     }
 });
 
@@ -272,6 +308,7 @@ document.getElementById('editForm').addEventListener('submit', async function(e)
         closeModal('editModal');
         const tr = document.getElementById(`category-row-${id}`);
         tr.innerHTML = getRowContent(data);
+        if (dataTable) dataTable.cell(tr, 3).invalidate().draw(false);
     }
 });
 
@@ -283,7 +320,9 @@ async function confirmDelete() {
         el.textContent = data.error; el.style.display = 'block';
     } else {
         closeModal('deleteModal');
-        document.getElementById(`category-row-${deleteTargetId}`).remove();
+        const tr = document.getElementById(`category-row-${deleteTargetId}`);
+        if (dataTable) dataTable.row(tr).remove().draw(false);
+        else tr.remove();
     }
 }
 </script>

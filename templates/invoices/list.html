@@ -1,6 +1,11 @@
 {% extends "base.html" %}
 {% block title %}帳務管理{% endblock %}
 {% block content %}
+{% if not print_mode %}
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.8/css/jquery.dataTables.min.css">
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.8/js/jquery.dataTables.min.js"></script>
+{% endif %}
 
 <div class="page-header {% if print_mode %}print-header{% endif %}">
     <h1>📋 帳務管理</h1>
@@ -70,7 +75,7 @@
 
 <!-- 清單 -->
 <div class="card">
-    <table>
+    <table id="invoiceTable">
         <thead>
             <tr>
                 <th>帳單編號</th>
@@ -161,6 +166,26 @@ function closeDuplicateModal() {
 
 document.addEventListener('keydown', function (e) {
     if (e.key === 'Escape') closeDuplicateModal();
+});
+
+$(function () {
+    $('#invoiceTable').DataTable({
+        pageLength: 25,
+        order: [[3, 'desc']],
+        language: {
+            search: "快速搜尋：",
+            lengthMenu: "每頁顯示 _MENU_ 筆",
+            info: "顯示第 _START_ 到 _END_ 筆，共 _TOTAL_ 筆",
+            infoEmpty: "目前沒有資料",
+            zeroRecords: "查無符合資料",
+            paginate: {
+                first: "第一頁",
+                previous: "上一頁",
+                next: "下一頁",
+                last: "最後一頁"
+            }
+        }
+    });
 });
 </script>
 {% endif %}

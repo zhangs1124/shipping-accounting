@@ -1,9 +1,12 @@
 from fastapi import APIRouter, Depends, Request, Form
-from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, StreamingResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 from datetime import datetime
 from typing import Optional
+import io
+import pandas as pd
+import openpyxl.styles as styles
 
 import models
 from database import get_db
@@ -223,6 +226,119 @@ def print_voyage_tasks(
         "task_logs": task_logs,
         "print_date": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     })
+
+
+# ────────────────────────────────────────────────────────────
+#  Excel 匯出：產生格式化的 Excel 檔案供下載
+# ────────────────────────────────────────────────────────────
+@router.get("/{voyage_id}/excel")
+def export_voyage_tasks_excel(
+    voyage_id: int,
+    db: Session = Depends(get_db)
+):
+    voyage = db.query(models.Voyage).filter(models.Voyage.id == voyage_id).first()
+    if not voyage:
+        return RedirectResponse(url="/voyage-tasks", status_code=303)
+
+    # 讀取清單（依自定義顯示順序排序）
+    task_logs = (
+        db.query(models.VoyageTaskLog)
+        .join(models.TaskCategory)
+        .filter(models.VoyageTaskLog.voyage_id == voyage_id)
+        .order_by(
+            models.TaskCategory.display_order,
+            models.TaskCategory.task_group,
+            models.TaskCategory.name
+        )
+        .all()
+    )
+
+    # 準備資料
+    data = []
+    for i, log in enumerate(task_logs, 1):
+        data.append({
+            "#": i,
+            "任務分組": log.task_category.task_group or '未分類',
+            "任務項目內容": log.task_category.name,
+            "執行時間": log.recorded_time.strftime('%Y-%m-%d %H:%M') if log.recorded_time else '尚未執行',
+            "備註": log.remarks or ''
+        })
+
+    # 使用 io.BytesIO 作為記憶體緩衝區
+    output = io.BytesIO()
+    
+    # 建立一個新的 Excel 活頁簿
+    wb = pd.io.excel._openpyxl.styles.openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "進出港任務"
+    
+    # 1. 寫入主檔資訊 (標題與基礎資訊)
+    ws.merge_cells('A1:E1')
+    ws['A1'] = f"進出港任務報表 - {voyage.voyage_no}"
+    ws['A1'].font = styles.Font(bold=True, size=16, color="1A3A5C")
+    ws['A1'].alignment = styles.Alignment(horizontal='center', vertical='center')
+    
+    ws['A2'] = f"船舶名稱: {voyage.ship.name} ({voyage.ship.code})"
+    ws['C2'] = f"航次編號: {voyage.voyage_no}"
+    ws['A3'] = f"裝卸港口: {voyage.port_of_loading or '-'} ➔ {voyage.port_of_discharge or '-'}"
+    ws['C3'] = f"匯出日期: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
+    
+    # 子標題字體
+    sub_font = styles.Font(bold=True)
+    ws['A2'].font = sub_font
+    ws['C2'].font = sub_font
+    ws['A3'].font = sub_font
+    ws['C3'].font = sub_font
+    
+    # 2. 寫入表格標題
+    headers = ["#", "任務分組", "任務項目內容", "執行時間", "備註"]
+    header_font = styles.Font(bold=True, color="FFFFFF")
+    header_fill = styles.PatternFill(start_color="1A3A5C", end_color="1A3A5C", fill_type="solid")
+    
+    for col_idx, h_text in enumerate(headers, 1):
+        cell = ws.cell(row=5, column=col_idx, value=h_text)
+        cell.font = header_font
+        cell.fill = header_fill
+        cell.alignment = styles.Alignment(horizontal='center')
+        
+    # 3. 寫入資料內容
+    thin_border = styles.Side(border_style="thin", color="000000")
+    border = styles.Border(top=thin_border, left=thin_border, right=thin_border, bottom=thin_border)
+    
+    for r_idx, row_data in enumerate(data, 6):
+        ws.cell(row=r_idx, column=1, value=row_data["#"]).alignment = styles.Alignment(horizontal='center')
+        ws.cell(row=r_idx, column=2, value=row_data["任務分組"]).alignment = styles.Alignment(horizontal='center')
+        ws.cell(row=r_idx, column=3, value=row_data["任務項目內容"])
+        ws.cell(row=r_idx, column=4, value=row_data["執行時間"]).alignment = styles.Alignment(horizontal='center')
+        ws.cell(row=r_idx, column=5, value=row_data["備註"])
+        
+        # 套用框線
+        for c_idx in range(1, 6):
+            ws.cell(row=r_idx, column=c_idx).border = border
+            
+    # 對標題列也套用框線
+    for c_idx in range(1, 6):
+        ws.cell(row=5, column=c_idx).border = border
+    
+    # 4. 欄位寬度調整
+    ws.column_dimensions['A'].width = 6
+    ws.column_dimensions['B'].width = 12
+    ws.column_dimensions['C'].width = 35
+    ws.column_dimensions['D'].width = 20
+    ws.column_dimensions['E'].width = 35
+
+    wb.save(output)
+    output.seek(0)
+    
+    # 下載檔名
+    safe_voyage_no = voyage.voyage_no.replace("/", "_").replace("\\", "_")
+    filename = f"VoyageTasks_{safe_voyage_no}_{datetime.now().strftime('%Y%m%d_%H%M')}.xlsx"
+    
+    return StreamingResponse(
+        output,
+        media_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        headers={"Content-Disposition": f"attachment; filename={filename}"}
+    )
 
 
 # ────────────────────────────────────────────────────────────

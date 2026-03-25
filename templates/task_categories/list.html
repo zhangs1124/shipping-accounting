@@ -1,0 +1,291 @@
+{% extends "base.html" %}
+{% block title %}進出港項目維護{% endblock %}
+{% block content %}
+
+<div class="page-header">
+    <h1>⚓ 進出港項目維護 (SOP 任務)</h1>
+    <button class="btn btn-primary" onclick="openModal('addModal')">＋ 新增項目</button>
+</div>
+
+<!-- 清單 -->
+<div class="card">
+    <table>
+        <thead>
+            <tr>
+                <th>項目名稱</th>
+                <th>任務分組</th>
+                <th>預設規費</th>
+                <th>顯示順序</th>
+                <th class="text-center">狀態</th>
+                <th class="text-center">操作</th>
+            </tr>
+        </thead>
+        <tbody id="categoryTableBody">
+            {% for cat in categories %}
+            <tr id="category-row-{{ cat.id }}">
+                <td><strong>{{ cat.name }}</strong></td>
+                <td><span class="badge badge-info">{{ cat.task_group or '-' }}</span></td>
+                <td>{{ "${:,.2f}".format(cat.default_fee) }}</td>
+                <td>{{ cat.display_order }}</td>
+                <td class="text-center">
+                    {% if cat.is_active %}
+                    <span class="badge badge-done">啟用中</span>
+                    {% else %}
+                    <span class="badge badge-draft">停用</span>
+                    {% endif %}
+                </td>
+                <td class="text-center">
+                    <button class="btn btn-warning btn-sm btn-edit-cat" 
+                        data-id="{{ cat.id }}" 
+                        data-name="{{ cat.name }}" 
+                        data-group="{{ cat.task_group or '' }}"
+                        data-fee="{{ cat.default_fee }}" 
+                        data-order="{{ cat.display_order }}" 
+                        data-active="{{ cat.is_active }}">編輯</button>
+                    <button class="btn btn-danger btn-sm btn-delete-cat" 
+                        data-id="{{ cat.id }}" 
+                        data-name="{{ cat.name }}">刪除</button>
+                </td>
+            </tr>
+            {% else %}
+            <tr id="emptyRow"><td colspan="6" class="text-center" style="color:#999;padding:24px;">尚無項目資料</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- 新增 Modal -->
+<div class="modal-overlay" id="addModal">
+    <div class="modal">
+        <div class="modal-header">
+            <h2>新增進出港項目</h2>
+            <button class="modal-close" onclick="closeModal('addModal')">✕</button>
+        </div>
+        <form id="addForm">
+            <div class="form-grid">
+                <div class="form-group" style="grid-column: span 2;">
+                    <label>項目名稱 *</label>
+                    <input type="text" id="add_name" required maxlength="100" placeholder="例：引水時間(進港)">
+                </div>
+                <div class="form-group">
+                    <label>任務分組 *</label>
+                    <select id="add_group" required>
+                        <option value="預報">預報</option>
+                        <option value="檢疫">檢疫</option>
+                        <option value="現場">現場</option>
+                        <option value="財務">財務</option>
+                        <option value="申報">申報</option>
+                        <option value="單據">單據</option>
+                        <option value="其它">其它</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>預設規費</label>
+                    <input type="number" id="add_fee" step="0.01" value="0">
+                </div>
+                <div class="form-group">
+                    <label>顯示順序</label>
+                    <input type="number" id="add_order" value="0">
+                </div>
+            </div>
+            <div id="addError" class="alert alert-error" style="display:none;margin-top:12px;"></div>
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">新增</button>
+                <button type="button" class="btn btn-secondary" onclick="closeModal('addModal')">取消</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- 編輯 Modal -->
+<div class="modal-overlay" id="editModal">
+    <div class="modal">
+        <div class="modal-header">
+            <h2>編輯項目</h2>
+            <button class="modal-close" onclick="closeModal('editModal')">✕</button>
+        </div>
+        <form id="editForm">
+            <input type="hidden" id="edit_id">
+            <div class="form-grid">
+                <div class="form-group" style="grid-column: span 2;">
+                    <label>項目名稱 *</label>
+                    <input type="text" id="edit_name" required maxlength="100">
+                </div>
+                <div class="form-group">
+                    <label>任務分組 *</label>
+                    <select id="edit_group" required>
+                        <option value="預報">預報</option>
+                        <option value="檢疫">檢疫</option>
+                        <option value="現場">現場</option>
+                        <option value="財務">財務</option>
+                        <option value="申報">申報</option>
+                        <option value="單據">單據</option>
+                        <option value="其它">其它</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>預設規費</label>
+                    <input type="number" id="edit_fee" step="0.01">
+                </div>
+                <div class="form-group">
+                    <label>顯示順序</label>
+                    <input type="number" id="edit_order">
+                </div>
+                <div class="form-group">
+                    <label>狀態</label>
+                    <select id="edit_active">
+                        <option value="1">啟用</option>
+                        <option value="0">停用</option>
+                    </select>
+                </div>
+            </div>
+            <div id="editError" class="alert alert-error" style="display:none;margin-top:12px;"></div>
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">儲存變更</button>
+                <button type="button" class="btn btn-secondary" onclick="closeModal('editModal')">取消</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- 刪除確認 Modal -->
+<div class="modal-overlay" id="deleteModal">
+    <div class="modal" style="max-width:400px;">
+        <div class="modal-header">
+            <h2>確認刪除</h2>
+            <button class="modal-close" onclick="closeModal('deleteModal')">✕</button>
+        </div>
+        <p>確定要刪除「<strong id="deleteItemName"></strong>」嗎？<br><small style="color:#888;">注意：若已有航次紀錄關聯至此項目，將無法刪除。</small></p>
+        <div id="deleteError" class="alert alert-error" style="display:none;margin-top:12px;"></div>
+        <div class="form-actions" style="margin-top:16px;">
+            <button class="btn btn-danger" onclick="confirmDelete()">確定刪除</button>
+            <button class="btn btn-secondary" onclick="closeModal('deleteModal')">取消</button>
+        </div>
+    </div>
+</div>
+
+<script>
+// 輔助函式：產生表格列內容
+function getRowContent(cat) {
+    const groupColors = {
+        '預報': 'badge-info',
+        '檢疫': 'badge-warning',
+        '現場': 'badge-success',
+        '財務': 'badge-primary',
+        '申報': 'badge-secondary'
+    };
+    const groupColor = groupColors[cat.task_group] || 'badge-draft';
+    
+    return `
+        <td><strong>${cat.name}</strong></td>
+        <td><span class="badge ${groupColor}">${cat.task_group || '-'}</span></td>
+        <td>${parseFloat(cat.default_fee).toLocaleString('zh-TW', {minimumFractionDigits:2})}</td>
+        <td>${cat.display_order}</td>
+        <td class="text-center">
+            ${cat.is_active ? '<span class="badge badge-done">啟用中</span>' : '<span class="badge badge-draft">停用</span>'}
+        </td>
+        <td class="text-center">
+            <button class="btn btn-warning btn-sm btn-edit-cat" 
+                data-id="${cat.id}" 
+                data-name="${cat.name}" 
+                data-group="${cat.task_group || ''}"
+                data-fee="${cat.default_fee}" 
+                data-order="${cat.display_order}" 
+                data-active="${cat.is_active}">編輯</button>
+            <button class="btn btn-danger btn-sm btn-delete-cat" 
+                data-id="${cat.id}" 
+                data-name="${cat.name}">刪除</button>
+        </td>`;
+}
+
+// 監聽按鈕點擊（委派方式以支援動態新增的 Row）
+document.getElementById('categoryTableBody').addEventListener('click', function(e) {
+    const btnEdit = e.target.closest('.btn-edit-cat');
+    const btnDelete = e.target.closest('.btn-delete-cat');
+    
+    if (btnEdit) {
+        const d = btnEdit.dataset;
+        openEditModal(d.id, d.name, d.group, d.fee, d.order, d.active);
+    } else if (btnDelete) {
+        const d = btnDelete.dataset;
+        openDeleteModal(d.id, d.name);
+    }
+});
+
+function openEditModal(id, name, group, fee, order, active) {
+    document.getElementById('edit_id').value = id;
+    document.getElementById('edit_name').value = name;
+    document.getElementById('edit_group').value = group;
+    document.getElementById('edit_fee').value = fee;
+    document.getElementById('edit_order').value = order;
+    document.getElementById('edit_active').value = active;
+    openModal('editModal');
+}
+
+function openDeleteModal(id, name) {
+    deleteTargetId = id;
+    document.getElementById('deleteItemName').textContent = name;
+    openModal('deleteModal');
+}
+
+document.getElementById('addForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const body = new URLSearchParams({
+        name: document.getElementById('add_name').value,
+        task_group: document.getElementById('add_group').value,
+        default_fee: document.getElementById('add_fee').value,
+        display_order: document.getElementById('add_order').value,
+    });
+    const res = await fetch('/task-categories/api', { method: 'POST', body });
+    const data = await res.json();
+    if (data.error) {
+        const el = document.getElementById('addError');
+        el.textContent = data.error; el.style.display = 'block';
+    } else {
+        closeModal('addModal');
+        const emptyRow = document.getElementById('emptyRow');
+        if (emptyRow) emptyRow.remove();
+        
+        const tr = document.createElement('tr');
+        tr.id = `category-row-${data.id}`;
+        tr.innerHTML = getRowContent(data);
+        document.getElementById('categoryTableBody').appendChild(tr);
+    }
+});
+
+document.getElementById('editForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const id = document.getElementById('edit_id').value;
+    const body = new URLSearchParams({
+        name: document.getElementById('edit_name').value,
+        task_group: document.getElementById('edit_group').value,
+        default_fee: document.getElementById('edit_fee').value,
+        display_order: document.getElementById('edit_order').value,
+        is_active: document.getElementById('edit_active').value,
+    });
+    const res = await fetch(`/task-categories/api/${id}`, { method: 'POST', body });
+    const data = await res.json();
+    if (data.error) {
+        const el = document.getElementById('editError');
+        el.textContent = data.error; el.style.display = 'block';
+    } else {
+        closeModal('editModal');
+        const tr = document.getElementById(`category-row-${id}`);
+        tr.innerHTML = getRowContent(data);
+    }
+});
+
+async function confirmDelete() {
+    const res = await fetch(`/task-categories/api/${deleteTargetId}/delete`, { method: 'POST' });
+    const data = await res.json();
+    if (data.error) {
+        const el = document.getElementById('deleteError');
+        el.textContent = data.error; el.style.display = 'block';
+    } else {
+        closeModal('deleteModal');
+        document.getElementById(`category-row-${deleteTargetId}`).remove();
+    }
+}
+</script>
+
+{% endblock %}

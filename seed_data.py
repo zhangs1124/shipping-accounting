@@ -16,6 +16,9 @@ db.query(models.Invoice).delete()
 db.query(models.Voyage).delete()
 db.query(models.Ship).delete()
 db.query(models.ChargeItem).delete()
+db.query(models.VoyageTaskLog).delete()
+db.query(models.TaskCategory).delete()
+db.commit()
 db.commit()
 
 # ── 船舶 ──────────────────────────────────────────
@@ -65,6 +68,25 @@ db.add_all(charge_items)
 db.commit()
 for ci in charge_items:
     db.refresh(ci)
+
+# ── 進出港任務類別 ────────────────────────────────
+task_categories = [
+    models.TaskCategory(name="進港預報時間", task_group="預報", default_fee=Decimal("0"), display_order=1),
+    models.TaskCategory(name="出港預報時間", task_group="預報", default_fee=Decimal("0"), display_order=2),
+    models.TaskCategory(name="引水時間(進港)", task_group="現場", default_fee=Decimal("0"), display_order=3),
+    models.TaskCategory(name="引水時間(出港)", task_group="現場", default_fee=Decimal("0"), display_order=4),
+    models.TaskCategory(name="RPM (國外)時間", task_group="檢疫", default_fee=Decimal("0"), display_order=5),
+    models.TaskCategory(name="船舶檢疫完成證明書(國內)時間", task_group="檢疫", default_fee=Decimal("0"), display_order=6),
+    models.TaskCategory(name="SSCEC時間", task_group="檢疫", default_fee=Decimal("0"), display_order=7),
+    models.TaskCategory(name="買/換檢疫准單時間", task_group="檢疫", default_fee=Decimal("0"), display_order=8),
+    models.TaskCategory(name="列印繳費單(超商$1058)時間", task_group="財務", default_fee=Decimal("1058"), display_order=9),
+    models.TaskCategory(name="下載檢疫三連單時間", task_group="單據", default_fee=Decimal("0"), display_order=10),
+    models.TaskCategory(name="進港預報重報時間", task_group="預報", default_fee=Decimal("0"), display_order=11),
+    models.TaskCategory(name="出港預報重報時間", task_group="預報", default_fee=Decimal("0"), display_order=12),
+    models.TaskCategory(name="SDH 上傳時間", task_group="申報", default_fee=Decimal("0"), display_order=13),
+]
+db.add_all(task_categories)
+db.commit()
 
 # ── 帳務主項目 ────────────────────────────────────
 invoices = [

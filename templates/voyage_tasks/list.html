@@ -1,0 +1,154 @@
+{% extends "base.html" %}
+{% block title %}進出港任務檢核{% endblock %}
+{% block content %}
+
+<div class="page-header">
+    <h1>⚓ 進出港任務檢核</h1>
+</div>
+
+{% if request.query_params.get('error') %}
+<div class="alert alert-error">{{ request.query_params.get('error') }}</div>
+{% endif %}
+
+<!-- 新增進出港記錄 -->
+<div class="card">
+    <h2 style="font-size:1rem; color:#1a3a5c; margin-bottom:16px;">新增進出港記錄</h2>
+    <form method="post" action="/voyage-tasks/create" style="display:flex; gap:12px; align-items:flex-end; flex-wrap:wrap;">
+        <div class="form-group" style="flex:1; min-width:180px; margin:0;">
+            <label>船名 *</label>
+            <input type="text"
+                   id="shipNameInput"
+                   name="ship_name"
+                   list="shipList"
+                   placeholder="輸入船名或代碼"
+                   required
+                   autocomplete="off"
+                   style="width:100%;">
+            <datalist id="shipList">
+                {% for s in ships %}
+                <option value="{{ s.name }}">{{ s.code }} — {{ s.name }}</option>
+                {% endfor %}
+            </datalist>
+        </div>
+        <div class="form-group" style="flex:1; min-width:180px; margin:0;">
+            <label>航次編號 *</label>
+            <select name="voyage_no" id="voyageNoInput" required style="width:100%;">
+                <option value="">-- 請先輸入船名 --</option>
+            </select>
+        </div>
+        <div style="padding-bottom:2px;">
+            <button type="submit" class="btn btn-primary">➕ 新增</button>
+        </div>
+    </form>
+</div>
+
+<!-- 已建立的進出港記錄清單 -->
+<div class="card">
+    <h2 style="font-size:1rem; color:#1a3a5c; margin-bottom:16px;">已建立的記錄</h2>
+    {% if voyages_with_tasks %}
+    <table>
+        <thead>
+            <tr>
+                <th style="width:40px;">#</th>
+                <th>船名</th>
+                <th>航次編號</th>
+                <th>裝卸港區間</th>
+                <th class="text-center">完成進度</th>
+                <th class="text-center">操作</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in voyages_with_tasks %}
+            {% set v = item.voyage %}
+            <tr>
+                <td style="color:#888;">{{ loop.index }}</td>
+                <td>{{ v.ship.code }} — {{ v.ship.name }}</td>
+                <td><strong>{{ v.voyage_no }}</strong></td>
+                <td>{{ v.port_of_loading or '?' }} ➔ {{ v.port_of_discharge or '?' }}</td>
+                <td class="text-center">
+                    {% set pct = (item.done / item.total * 100) | int if item.total > 0 else 0 %}
+                    <div style="display:flex; align-items:center; gap:8px; justify-content:center;">
+                        <div style="width:100px; background:#e9ecef; border-radius:4px; height:8px; overflow:hidden;">
+                            <div style="width:{{ pct }}%; background:{% if pct == 100 %}#28a745{% elif pct > 0 %}#ffc107{% else %}#dee2e6{% endif %}; height:100%; border-radius:4px;"></div>
+                        </div>
+                        <span style="font-size:0.82rem; color:#555;">{{ item.done }}/{{ item.total }}</span>
+                    </div>
+                </td>
+                <td class="text-center">
+                    <a href="/voyage-tasks/{{ v.id }}" class="btn btn-primary btn-sm">📋 查看</a>
+                    <form method="post" action="/voyage-tasks/{{ v.id }}/purge" style="display:inline;" onsubmit="return confirm('確定要刪除此航次的所有進出港任務紀錄嗎？');">
+                        <button type="submit" class="btn btn-danger btn-sm">🗑 刪除</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <div style="text-align:center; padding:40px; color:#aaa;">
+        <div style="font-size:2.5rem; margin-bottom:12px;">⚓</div>
+        <p>尚無進出港記錄，請使用上方表單新增。</p>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+    const shipInput = document.getElementById('shipNameInput');
+    const voyageSelect = document.getElementById('voyageNoInput');
+
+    shipInput.addEventListener('input', async function() {
+        const val = this.value;
+        const opts = document.getElementById('shipList').childNodes;
+        let found = false;
+        
+        // 檢查輸入是否在建議清單中
+        for (let i = 0; i < opts.length; i++) {
+            if (opts[i].value === val) {
+                found = true;
+                break;
+            }
+        }
+
+        if (found) {
+            // 抓取航次
+            try {
+                const res = await fetch(`/voyage-tasks/api/voyages?ship_name=${encodeURIComponent(val)}`);
+                const voyages = await res.json();
+                
+                voyageSelect.innerHTML = '<option value="">-- 請選擇航次 --</option>';
+                if (voyages.length === 0) {
+                    voyageSelect.innerHTML = '<option value="">-- 無可用航次 --</option>';
+                    return;
+                }
+                
+                voyages.forEach(v => {
+                    const opt = document.createElement('option');
+                    opt.value = v.voyage_no;
+                    opt.textContent = v.voyage_no;
+                    voyageSelect.appendChild(opt);
+                });
+            } catch (err) {
+                console.error('Failed to fetch voyages:', err);
+            }
+        } else {
+            voyageSelect.innerHTML = '<option value="">-- 請先輸入正確船名 --</option>';
+        }
+    });
+</script>
+
+<script>
+    $(document).ready(function() {
+        $('table').DataTable({
+            "language": {
+                "url": "https://cdn.datatables.net/plug-ins/1.13.7/i18n/zh-HANT.json"
+            },
+            "pageLength": 10,
+            "order": [[2, 'desc']], // 依航次倒序
+            "columnDefs": [
+                { "orderable": false, "targets": [0, 4, 5] }
+            ]
+        });
+    });
+</script>
+
+{% endblock %}

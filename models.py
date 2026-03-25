@@ -33,6 +33,37 @@ class Voyage(Base):
 
     ship = relationship("Ship", back_populates="voyages")
     invoices = relationship("Invoice", back_populates="voyage")
+    task_logs = relationship("VoyageTaskLog", back_populates="voyage")
+
+
+class TaskCategory(Base):
+    __tablename__ = "task_categories"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, nullable=False)    # 任務名稱
+    task_group = Column(String)             # 分組
+    default_fee = Column(Numeric(18, 2), default=0) # 預設規費
+    display_order = Column(Integer, default=0)
+    is_active = Column(Integer, default=1)   # 1: 啟用, 0: 停用
+    created_at = Column(DateTime, default=func.now())
+    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
+
+    task_logs = relationship("VoyageTaskLog", back_populates="task_category")
+
+
+class VoyageTaskLog(Base):
+    __tablename__ = "voyage_task_logs"
+
+    id = Column(Integer, primary_key=True, index=True)
+    voyage_id = Column(Integer, ForeignKey("voyages.id"), nullable=False)
+    task_id = Column(Integer, ForeignKey("task_categories.id"), nullable=False)
+    recorded_time = Column(DateTime) # 實際動作時間
+    recorded_by = Column(String) # 執行的使用者
+    remarks = Column(String)     # 備註
+    created_at = Column(DateTime, default=func.now())
+
+    voyage = relationship("Voyage", back_populates="task_logs")
+    task_category = relationship("TaskCategory", back_populates="task_logs")
 
 
 class ChargeItem(Base):
@@ -75,6 +106,8 @@ class Invoice(Base):
     status = Column(String, default="草稿")  # 草稿/已開立/已收款
     responsible = Column(String)  # 發票/帳務負責人（從客戶帶入）
     total_amount = Column(Numeric(18, 2), default=0)
+    is_reminded = Column(Integer, default=0)  # 0:未提醒, 1:已提醒 (SQLite 不支援 Boolean 預設值時常用 Integer)
+    last_reminded_at = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=func.now())
     updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
 

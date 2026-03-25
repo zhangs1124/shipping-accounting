@@ -4,53 +4,352 @@
 
 <div class="page-header">
     <h1>👥 客戶管理</h1>
-    <div style="display:flex; gap:8px; align-items:center;">
-        <a href="/customers/new" class="btn btn-primary">＋ 新增客戶</a>
+    <div style="display:flex; gap:12px; align-items:center;">
+        <div class="search-box">
+            <input type="text" id="searchInput" placeholder="搜尋客戶名稱..." onkeyup="filterTable()" style="padding:7px 12px; border:1px solid #ddd; border-radius:4px; font-size:0.9rem; min-width:240px;">
+        </div>
+        <button class="btn btn-primary" onclick="openModal('addModal')">＋ 新增客戶</button>
     </div>
 </div>
 
-{% if request.query_params.get('error') %}
-<div class="alert alert-error">{{ request.query_params.get('error') }}</div>
-{% endif %}
+<div id="serverError" class="alert alert-error" style="display:none"></div>
 
 <div class="card">
-    <table>
+    <table id="customerTable">
         <thead>
             <tr>
                 <th>客戶名稱</th>
-                <th>負責人</th>
-                <th>發票前綴</th>
-                <th>聯絡人</th>
-                <th>電話</th>
-                <th>電子信箱</th>
-                <th class="text-center">操作</th>
+                <th style="width:100px;">發票前綴</th>
+                <th>聯絡資訊</th>
+                <th>其他資訊</th>
+                <th class="text-center" style="width:140px;">操作</th>
             </tr>
         </thead>
-        <tbody>
+        <tbody id="customerTableBody">
             {% for c in customers %}
-            <tr>
-                <td><strong>{{ c.name }}</strong></td>
-                <td>{{ c.responsible or '' }}</td>
-                <td>{{ c.invoice_prefix or 'A' }}</td>
-                <td>{{ c.contact or '' }}</td>
-                <td>{{ c.phone or '' }}</td>
-                <td>{{ c.email or '' }}</td>
+            <tr id="customer-row-{{ c.id }}">
+                <td>
+                    <div style="font-weight:bold; color:#1a3a5c;">{{ c.name }}</div>
+                    <div style="font-size:0.82rem; color:#666;">負責人: {{ c.responsible or '-' }}</div>
+                </td>
+                <td class="text-center"><span class="badge badge-info">{{ c.invoice_prefix or 'A' }}</span></td>
+                <td>
+                    <div style="font-size:0.9rem;">👤 {{ c.contact or '-' }}</div>
+                    <div style="font-size:0.85rem; color:#444;">📞 {{ c.phone or '-' }}</div>
+                    <div style="font-size:0.85rem; color:#0066cc;">✉️ {{ c.email or '-' }}</div>
+                </td>
+                <td style="font-size:0.85rem; color:#666; max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="{{ c.address or '' }}">
+                    📍 {{ c.address or '-' }}
+                </td>
                 <td class="text-center">
-                    <a href="/customers/{{ c.id }}/edit" class="btn btn-warning btn-sm">編輯</a>
-                    <form method="post"
-                          action="/customers/{{ c.id }}/delete"
-                          style="display:inline"
-                          onsubmit="return confirm('確定刪除此客戶？');">
-                        <button type="submit" class="btn btn-danger btn-sm">刪除</button>
-                    </form>
+                    <button class="btn btn-warning btn-sm btn-edit-cust"
+                        data-id="{{ c.id }}"
+                        data-name="{{ c.name }}"
+                        data-responsible="{{ c.responsible or '' }}"
+                        data-prefix="{{ c.invoice_prefix or 'A' }}"
+                        data-contact="{{ c.contact or '' }}"
+                        data-phone="{{ c.phone or '' }}"
+                        data-email="{{ c.email or '' }}"
+                        data-address="{{ c.address or '' }}">
+                        編輯
+                    </button>
+                    <button class="btn btn-danger btn-sm btn-delete-cust"
+                        data-id="{{ c.id }}"
+                        data-name="{{ c.name }}">
+                        刪除
+                    </button>
                 </td>
             </tr>
             {% else %}
-            <tr><td colspan="5" class="text-center" style="color:#999; padding:24px;">尚無客戶資料</td></tr>
+            <tr id="emptyRow"><td colspan="5" class="text-center" style="color:#999; padding:32px;">尚無客戶資料</td></tr>
             {% endfor %}
         </tbody>
     </table>
 </div>
+
+<!-- 新增 Modal -->
+<div class="modal-overlay" id="addModal">
+    <div class="modal" style="max-width:640px;">
+        <div class="modal-header">
+            <h2>新增客戶</h2>
+            <button class="modal-close" onclick="closeModal('addModal')">✕</button>
+        </div>
+        <form id="addForm">
+            <div class="form-grid">
+                <div class="form-grid-item" style="grid-column: span 2;">
+                    <div class="form-group">
+                        <label>客戶全名 *</label>
+                        <input type="text" id="add_name" required maxlength="100" placeholder="例：長榮海運股份有限公司">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>負責人</label>
+                    <input type="text" id="add_responsible" maxlength="50">
+                </div>
+                <div class="form-group">
+                    <label>發票前綴 *</label>
+                    <input type="text" id="add_prefix" required maxlength="5" value="A">
+                </div>
+                <div class="form-group">
+                    <label>聯絡人</label>
+                    <input type="text" id="add_contact" maxlength="50">
+                </div>
+                <div class="form-group">
+                    <label>電話</label>
+                    <input type="text" id="add_phone" maxlength="50">
+                </div>
+                <div class="form-group" style="grid-column: span 2;">
+                    <label>電子信箱</label>
+                    <input type="email" id="add_email" maxlength="100">
+                </div>
+                <div class="form-group" style="grid-column: span 2;">
+                    <label>地址</label>
+                    <textarea id="add_address" rows="2" maxlength="200"></textarea>
+                </div>
+            </div>
+            <div id="addError" class="alert alert-error" style="display:none; margin-top:12px;"></div>
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">新增</button>
+                <button type="button" class="btn btn-secondary" onclick="closeModal('addModal')">取消</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- 編輯 Modal -->
+<div class="modal-overlay" id="editModal">
+    <div class="modal" style="max-width:640px;">
+        <div class="modal-header">
+            <h2>編輯客戶</h2>
+            <button class="modal-close" onclick="closeModal('editModal')">✕</button>
+        </div>
+        <form id="editForm">
+            <input type="hidden" id="edit_id">
+            <div class="form-grid">
+                <div class="form-group" style="grid-column: span 2;">
+                    <label>客戶全名 *</label>
+                    <input type="text" id="edit_name" required maxlength="100">
+                </div>
+                <div class="form-group">
+                    <label>負責人</label>
+                    <input type="text" id="edit_responsible" maxlength="50">
+                </div>
+                <div class="form-group">
+                    <label>發票前綴 *</label>
+                    <input type="text" id="edit_prefix" required maxlength="5">
+                </div>
+                <div class="form-group">
+                    <label>聯絡人</label>
+                    <input type="text" id="edit_contact" maxlength="50">
+                </div>
+                <div class="form-group">
+                    <label>電話</label>
+                    <input type="text" id="edit_phone" maxlength="50">
+                </div>
+                <div class="form-group" style="grid-column: span 2;">
+                    <label>電子信箱</label>
+                    <input type="email" id="edit_email" maxlength="100">
+                </div>
+                <div class="form-group" style="grid-column: span 2;">
+                    <label>地址</label>
+                    <textarea id="edit_address" rows="2" maxlength="200"></textarea>
+                </div>
+            </div>
+            <div id="editError" class="alert alert-error" style="display:none; margin-top:12px;"></div>
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">儲存變更</button>
+                <button type="button" class="btn btn-secondary" onclick="closeModal('editModal')">取消</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- 刪除確認 Modal -->
+<div class="modal-overlay" id="deleteModal">
+    <div class="modal" style="max-width:400px;">
+        <div class="modal-header">
+            <h2>確認刪除</h2>
+            <button class="modal-close" onclick="closeModal('deleteModal')">✕</button>
+        </div>
+        <p>確定要刪除客戶「<strong id="deleteCustName"></strong>」嗎？<br>
+        <small style="color:#888;">注意：若已有關聯帳單，將無法刪除。</small></p>
+        <div id="deleteError" class="alert alert-error" style="display:none; margin-top:12px;"></div>
+        <div class="form-actions" style="margin-top:16px;">
+            <button class="btn btn-danger" onclick="confirmDelete()">確定刪除</button>
+            <button class="btn btn-secondary" onclick="closeModal('deleteModal')">取消</button>
+        </div>
+    </div>
+</div>
+
+<script>
+let deleteTargetId = null;
+
+function openModal(id) { document.getElementById(id).classList.add('active'); }
+function closeModal(id) {
+    document.getElementById(id).classList.remove('active');
+    const form = document.getElementById(id).querySelector('form');
+    if (form) form.reset();
+    ['addError','editError','deleteError'].forEach(e => {
+        const el = document.getElementById(e);
+        if (el) el.style.display = 'none';
+    });
+}
+
+// 事件委派監聽按鈕
+document.getElementById('customerTableBody').addEventListener('click', function(e) {
+    const btnEdit = e.target.closest('.btn-edit-cust');
+    const btnDelete = e.target.closest('.btn-delete-cust');
+    
+    if (btnEdit) {
+        const d = btnEdit.dataset;
+        openEditModal(d.id, d.name, d.responsible, d.prefix, d.contact, d.phone, d.email, d.address);
+    } else if (btnDelete) {
+        const d = btnDelete.dataset;
+        openDeleteModal(d.id, d.name);
+    }
+});
+
+function openEditModal(id, name, resp, prefix, contact, phone, email, addr) {
+    document.getElementById('edit_id').value = id;
+    document.getElementById('edit_name').value = name;
+    document.getElementById('edit_responsible').value = resp;
+    document.getElementById('edit_prefix').value = prefix;
+    document.getElementById('edit_contact').value = contact;
+    document.getElementById('edit_phone').value = phone;
+    document.getElementById('edit_email').value = email;
+    document.getElementById('edit_address').value = addr;
+    openModal('editModal');
+}
+
+function openDeleteModal(id, name) {
+    deleteTargetId = id;
+    document.getElementById('deleteCustName').textContent = name;
+    openModal('deleteModal');
+}
+
+// 輔助函式：產生表格列 HTML
+function getRowHtml(c) {
+    return `
+        <td>
+            <div style="font-weight:bold; color:#1a3a5c;">${c.name}</div>
+            <div style="font-size:0.82rem; color:#666;">負責人: ${c.responsible || '-'}</div>
+        </td>
+        <td class="text-center"><span class="badge badge-info">${c.invoice_prefix || 'A'}</span></td>
+        <td>
+            <div style="font-size:0.9rem;">👤 ${c.contact || '-'}</div>
+            <div style="font-size:0.85rem; color:#444;">📞 ${c.phone || '-'}</div>
+            <div style="font-size:0.85rem; color:#0066cc;">✉️ ${c.email || '-'}</div>
+        </td>
+        <td style="font-size:0.85rem; color:#666; max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${c.address || ''}">
+            📍 ${c.address || '-'}
+        </td>
+        <td class="text-center">
+            <button class="btn btn-warning btn-sm btn-edit-cust"
+                data-id="${c.id}" data-name="${c.name}" data-responsible="${c.responsible||''}"
+                data-prefix="${c.invoice_prefix||'A'}" data-contact="${c.contact||''}"
+                data-phone="${c.phone||''}" data-email="${c.email||''}" data-address="${c.address||''}">編輯</button>
+            <button class="btn btn-danger btn-sm btn-delete-cust"
+                data-id="${c.id}" data-name="${c.name}">刪除</button>
+        </td>`;
+}
+
+// 新增
+document.getElementById('addForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const body = new URLSearchParams({
+        name: document.getElementById('add_name').value,
+        responsible: document.getElementById('add_responsible').value,
+        invoice_prefix: document.getElementById('add_prefix').value,
+        contact: document.getElementById('add_contact').value,
+        phone: document.getElementById('add_phone').value,
+        email: document.getElementById('add_email').value,
+        address: document.getElementById('add_address').value,
+    });
+    const res = await fetch('/customers/api', { method: 'POST', body });
+    const data = await res.json();
+    if (res.status >= 400) {
+        document.getElementById('addError').textContent = data.error || '儲存失敗';
+        document.getElementById('addError').style.display = 'block';
+    } else {
+        closeModal('addModal');
+        const emptyRow = document.getElementById('emptyRow');
+        if (emptyRow) emptyRow.remove();
+        const tr = document.createElement('tr');
+        tr.id = `customer-row-${data.id}`;
+        tr.innerHTML = getRowHtml(data);
+        document.getElementById('customerTableBody').appendChild(tr);
+    }
+});
+
+// 編輯
+document.getElementById('editForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const id = document.getElementById('edit_id').value;
+    const body = new URLSearchParams({
+        name: document.getElementById('edit_name').value,
+        responsible: document.getElementById('edit_responsible').value,
+        invoice_prefix: document.getElementById('edit_prefix').value,
+        contact: document.getElementById('edit_contact').value,
+        phone: document.getElementById('edit_phone').value,
+        email: document.getElementById('edit_email').value,
+        address: document.getElementById('edit_address').value,
+    });
+    const res = await fetch(`/customers/api/${id}`, { method: 'POST', body });
+    const data = await res.json();
+    if (res.status >= 400) {
+        document.getElementById('editError').textContent = data.error || '儲存失敗';
+        document.getElementById('editError').style.display = 'block';
+    } else {
+        closeModal('editModal');
+        const tr = document.getElementById(`customer-row-${id}`);
+        tr.innerHTML = getRowHtml(data);
+    }
+});
+
+// 刪除
+async function confirmDelete() {
+    const res = await fetch(`/customers/api/${deleteTargetId}/delete`, { method: 'POST' });
+    const data = await res.json();
+    if (res.status >= 400) {
+        document.getElementById('deleteError').textContent = data.error || '刪除失敗';
+        document.getElementById('deleteError').style.display = 'block';
+    } else {
+        closeModal('deleteModal');
+        document.getElementById(`customer-row-${deleteTargetId}`).remove();
+        if (!document.querySelector('#customerTableBody tr')) {
+            document.getElementById('customerTableBody').innerHTML = 
+                '<tr id="emptyRow"><td colspan="5" class="text-center" style="color:#999; padding:32px;">尚無客戶資料</td></tr>';
+        }
+    }
+}
+
+// 搜尋過濾
+function filterTable() {
+    const input = document.getElementById("searchInput");
+    const filter = input.value.toUpperCase();
+    const table = document.getElementById("customerTable");
+    const tr = table.getElementsByTagName("tr");
+    for (let i = 1; i < tr.length; i++) {
+        if (tr[i].id === 'emptyRow') continue;
+        const td = tr[i].getElementsByTagName("td")[0];
+        if (td) {
+            const txtValue = td.textContent || td.innerText;
+            if (txtValue.toUpperCase().indexOf(filter) > -1) {
+                tr[i].style.display = "";
+            } else {
+                tr[i].style.display = "none";
+            }
+        }
+    }
+}
+
+// 點擊背景關閉
+document.querySelectorAll('.modal-overlay').forEach(el => {
+    el.addEventListener('click', function(e) {
+        if (e.target === this) this.classList.remove('active');
+    });
+});
+</script>
 
 {% endblock %}
 

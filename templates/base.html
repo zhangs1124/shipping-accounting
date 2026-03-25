@@ -5,16 +5,27 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}船務部帳務系統{% endblock %}</title>
     <link rel="stylesheet" href="/static/style.css">
+    <!-- jQuery & DataTables -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css">
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
 </head>
 <body>
     <nav class="navbar">
         <div class="nav-brand">⚓ 船務部帳務系統</div>
         <ul class="nav-links">
             <li><a href="/invoices">帳務管理</a></li>
-            <li><a href="/customers">客戶管理</a></li>
-            <li><a href="/voyages">航次管理</a></li>
-            <li><a href="/ships">船舶管理</a></li>
-            <li><a href="/charge-items">收費項目</a></li>
+            <li><a href="/voyage-tasks">進出港</a></li>
+            <li class="dropdown">
+                <a href="javascript:void(0)" class="dropbtn">⚙️ 系統維護 ▾</a>
+                <div class="dropdown-content">
+                    <a href="/task-categories">項目維護</a>
+                    <a href="/customers">客戶管理</a>
+                    <a href="/voyages">航次管理</a>
+                    <a href="/ships">船舶管理</a>
+                    <a href="/charge-items">收費項目</a>
+                </div>
+            </li>
         </ul>
     </nav>
 

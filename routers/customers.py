@@ -136,7 +136,7 @@ def api_create_customer(
 ):
     existing = db.query(models.Customer).filter(models.Customer.name == name).first()
     if existing:
-        return {"error": f"客戶名稱 '{name}' 已存在"}
+        return JSONResponse({"error": f"客戶名稱 '{name}' 已存在"}, status_code=409)
 
     customer = models.Customer(
         name=name,
@@ -155,17 +155,82 @@ def api_create_customer(
         "name": customer.name,
         "responsible": customer.responsible or "",
         "invoice_prefix": customer.invoice_prefix or "A",
+        "contact": customer.contact or "",
+        "phone": customer.phone or "",
+        "email": customer.email or "",
+        "address": customer.address or "",
     }
+
+
+@router.post("/api/{customer_id}")
+def api_update_customer(
+    customer_id: int,
+    name: str = Form(...),
+    responsible: str = Form(""),
+    invoice_prefix: str = Form("A"),
+    contact: str = Form(""),
+    phone: str = Form(""),
+    email: str = Form(""),
+    address: str = Form(""),
+    db: Session = Depends(get_db),
+):
+    customer = db.query(models.Customer).filter(models.Customer.id == customer_id).first()
+    if not customer:
+        return JSONResponse({"error": "客戶不存在"}, status_code=404)
+
+    # 名稱變更檢查
+    other = db.query(models.Customer).filter(
+        models.Customer.name == name,
+        models.Customer.id != customer_id
+    ).first()
+    if other:
+        return JSONResponse({"error": f"客戶名稱 '{name}' 已存在"}, status_code=409)
+
+    customer.name = name
+    customer.responsible = responsible or None
+    customer.invoice_prefix = invoice_prefix or "A"
+    customer.contact = contact or None
+    customer.phone = phone or None
+    customer.email = email or None
+    customer.address = address or None
+
+    db.commit()
+    db.refresh(customer)
+    return {
+        "id": customer.id,
+        "name": customer.name,
+        "responsible": customer.responsible or "",
+        "invoice_prefix": customer.invoice_prefix or "A",
+        "contact": customer.contact or "",
+        "phone": customer.phone or "",
+        "email": customer.email or "",
+        "address": customer.address or "",
+    }
+
+
+@router.post("/api/{customer_id}/delete")
+def api_delete_customer(customer_id: int, db: Session = Depends(get_db)):
+    customer = db.query(models.Customer).filter(models.Customer.id == customer_id).first()
+    if not customer:
+        return JSONResponse({"error": "客戶不存在"}, status_code=404)
+
+    # 檢查是否被帳單使用
+    used_count = db.query(models.Invoice).filter(models.Invoice.customer_name == customer.name).count()
+    if used_count > 0:
+        return JSONResponse({"error": f"客戶已被 {used_count} 筆帳單使用，無法刪除"}, status_code=409)
+
+    db.delete(customer)
+    db.commit()
+    return {"ok": True}
 
 
 @router.post("/{customer_id}/delete")
 def delete_customer(customer_id: int, db: Session = Depends(get_db)):
+    # 原有的 HTML 路由，暫時保留，但內部邏輯可導向 JSON API 或保持原樣
     customer = db.query(models.Customer).filter(models.Customer.id == customer_id).first()
     if not customer:
         return RedirectResponse(url="/customers", status_code=303)
 
-    # 目前 Invoice 僅存 customer_name 字串；刪除客戶不會影響歷史資料，但為避免使用者誤刪，
-    # 仍做基本保護：若已有帳單使用同名客戶，阻擋刪除。
     used_count = db.query(models.Invoice).filter(models.Invoice.customer_name == customer.name).count()
     if used_count > 0:
         return RedirectResponse(url=f"/customers?error=客戶已被{used_count}筆帳單使用，無法刪除", status_code=303)

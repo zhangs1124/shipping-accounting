@@ -102,13 +102,13 @@
                 <td class="text-center">
                     <a href="/invoices/{{ inv.id }}" class="btn btn-primary btn-sm">開啟</a>
                     {% if not print_mode %}
-                    <form method="post"
-                          action="/invoices/{{ inv.id }}/duplicate"
-                          style="display:inline-flex; gap:6px; align-items:center; margin-left:6px;"
-                          onsubmit="return confirm('確定套用目前費用項目到新費用單？');">
-                        <input type="date" name="new_invoice_date" value="{{ today_str }}" required style="padding:4px 6px; border:1px solid #ced4da; border-radius:4px; font-size:0.82rem;">
-                        <button type="submit" class="btn btn-secondary btn-sm" {% if not inv.lines %}disabled title="來源帳單無明細，無法套用"{% endif %}>套用到新單</button>
-                    </form>
+                    <button type="button"
+                            class="btn btn-secondary btn-sm"
+                            style="margin-left:6px;"
+                            onclick="openDuplicateModal('{{ inv.id }}', '{{ inv.invoice_no }}')"
+                            {% if not inv.lines %}disabled title="來源帳單無明細，無法套用"{% endif %}>
+                        套用到新單
+                    </button>
                     {% endif %}
                 </td>
             </tr>
@@ -118,6 +118,52 @@
         </tbody>
     </table>
 </div>
+
+{% if not print_mode %}
+<div class="modal-overlay" id="duplicateModal">
+    <div class="modal">
+        <div class="modal-header">
+            <h2>套用到新費用單</h2>
+            <button type="button" class="modal-close" onclick="closeDuplicateModal()">&times;</button>
+        </div>
+        <form method="post" id="duplicateForm">
+            <div class="form-group" style="margin-bottom:12px;">
+                <label>來源帳單</label>
+                <input type="text" id="duplicateSourceNo" readonly>
+            </div>
+            <div class="form-group">
+                <label>新帳單日期 *</label>
+                <input type="date" name="new_invoice_date" id="duplicateDate" value="{{ today_str }}" required>
+            </div>
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">確認套用</button>
+                <button type="button" class="btn btn-secondary" onclick="closeDuplicateModal()">取消</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function openDuplicateModal(invoiceId, invoiceNo) {
+    const modal = document.getElementById('duplicateModal');
+    const form = document.getElementById('duplicateForm');
+    const sourceNo = document.getElementById('duplicateSourceNo');
+    const dateInput = document.getElementById('duplicateDate');
+    form.action = `/invoices/${invoiceId}/duplicate`;
+    sourceNo.value = invoiceNo;
+    dateInput.value = "{{ today_str }}";
+    modal.classList.add('active');
+}
+
+function closeDuplicateModal() {
+    document.getElementById('duplicateModal').classList.remove('active');
+}
+
+document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') closeDuplicateModal();
+});
+</script>
+{% endif %}
 
 {% if print_mode %}
 <div class="card print-total">

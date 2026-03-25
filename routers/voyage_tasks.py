@@ -6,6 +6,7 @@ from datetime import datetime
 from typing import Optional
 import io
 import pandas as pd
+import openpyxl
 import openpyxl.styles as styles
 
 import models
@@ -268,7 +269,7 @@ def export_voyage_tasks_excel(
     output = io.BytesIO()
     
     # 建立一個新的 Excel 活頁簿
-    wb = pd.io.excel._openpyxl.styles.openpyxl.Workbook()
+    wb = openpyxl.Workbook()
     ws = wb.active
     ws.title = "進出港任務"
     

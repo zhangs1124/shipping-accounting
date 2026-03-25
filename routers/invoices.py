@@ -55,6 +55,7 @@ def list_invoices(
         "invoices": invoices,
         "voyages": voyages,
         "statuses": INVOICE_STATUSES,
+        "today_str": date.today().isoformat(),
         "filter": {
             "voyage_id": voyage_id,
             "status": status,
@@ -314,6 +315,7 @@ def invoice_detail(invoice_id: int, request: Request, db: Session = Depends(get_
         "charge_items": charge_items,
         "statuses": INVOICE_STATUSES,
         "can_edit": invoice.status == "草稿",
+        "today_str": date.today().isoformat(),
     })
 
 
@@ -331,6 +333,59 @@ def update_invoice_status(
         invoice.status = status
         db.commit()
     return RedirectResponse(url=f"/invoices/{invoice_id}", status_code=303)
+
+
+@router.post("/{invoice_id}/duplicate")
+def duplicate_invoice(
+    invoice_id: int,
+    new_invoice_date: str = Form(...),
+    db: Session = Depends(get_db),
+):
+    source = db.query(models.Invoice).filter(models.Invoice.id == invoice_id).first()
+    if not source:
+        return RedirectResponse(url="/invoices?error=來源帳單不存在", status_code=303)
+    if not source.lines:
+        return RedirectResponse(url=f"/invoices/{invoice_id}?error=來源帳單無明細，無法套用", status_code=303)
+
+    invoice_dt = date.fromisoformat(new_invoice_date)
+    for _ in range(5):
+        new_invoice_no = generate_invoice_no(db, invoice_dt)
+        new_invoice = models.Invoice(
+            invoice_no=new_invoice_no,
+            voyage_id=source.voyage_id,
+            customer_name=source.customer_name,
+            invoice_date=invoice_dt,
+            status="草稿",
+            total_amount=0,
+        )
+        db.add(new_invoice)
+        db.flush()
+
+        total = Decimal("0")
+        for line in source.lines:
+            subtotal = line.quantity * line.unit_price
+            new_line = models.InvoiceLine(
+                invoice_id=new_invoice.id,
+                charge_item_id=line.charge_item_id,
+                quantity=line.quantity,
+                unit_price=line.unit_price,
+                currency=line.currency,
+                subtotal=subtotal,
+                remark=line.remark or "",
+            )
+            db.add(new_line)
+            total += subtotal
+
+        new_invoice.total_amount = total
+        try:
+            db.commit()
+            db.refresh(new_invoice)
+            return RedirectResponse(url=f"/invoices/{new_invoice.id}", status_code=303)
+        except IntegrityError:
+            db.rollback()
+            continue
+
+    return RedirectResponse(url=f"/invoices/{invoice_id}?error=套用失敗，請稍後重試", status_code=303)
 
 
 @router.post("/{invoice_id}/delete")

@@ -101,6 +101,15 @@
                 </td>
                 <td class="text-center">
                     <a href="/invoices/{{ inv.id }}" class="btn btn-primary btn-sm">開啟</a>
+                    {% if not print_mode %}
+                    <form method="post"
+                          action="/invoices/{{ inv.id }}/duplicate"
+                          style="display:inline-flex; gap:6px; align-items:center; margin-left:6px;"
+                          onsubmit="return confirm('確定套用目前費用項目到新費用單？');">
+                        <input type="date" name="new_invoice_date" value="{{ today_str }}" required style="padding:4px 6px; border:1px solid #ced4da; border-radius:4px; font-size:0.82rem;">
+                        <button type="submit" class="btn btn-secondary btn-sm" {% if not inv.lines %}disabled title="來源帳單無明細，無法套用"{% endif %}>套用到新單</button>
+                    </form>
+                    {% endif %}
                 </td>
             </tr>
             {% else %}

@@ -192,6 +192,40 @@ def detail_voyage_tasks(
 
 
 # ────────────────────────────────────────────────────────────
+#  列印頁：顯示格式化報表供列印
+# ────────────────────────────────────────────────────────────
+@router.get("/{voyage_id}/print", response_class=HTMLResponse)
+def print_voyage_tasks(
+    voyage_id: int,
+    request: Request,
+    db: Session = Depends(get_db)
+):
+    voyage = db.query(models.Voyage).filter(models.Voyage.id == voyage_id).first()
+    if not voyage:
+        return RedirectResponse(url="/voyage-tasks", status_code=303)
+
+    # 讀取清單（依自定義顯示順序排序）
+    task_logs = (
+        db.query(models.VoyageTaskLog)
+        .join(models.TaskCategory)
+        .filter(models.VoyageTaskLog.voyage_id == voyage_id)
+        .order_by(
+            models.TaskCategory.display_order,
+            models.TaskCategory.task_group,
+            models.TaskCategory.name
+        )
+        .all()
+    )
+
+    return templates.TemplateResponse("voyage_tasks/print.html", {
+        "request": request,
+        "voyage": voyage,
+        "task_logs": task_logs,
+        "print_date": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    })
+
+
+# ────────────────────────────────────────────────────────────
 #  API：新增任務項目到此航次
 # ────────────────────────────────────────────────────────────
 @router.post("/api/add")

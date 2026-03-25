@@ -8,6 +8,7 @@
         <form method="post" action="/voyage-tasks/{{ voyage.id }}/purge" onsubmit="return confirm('確定要刪除此航次的所有進出港任務紀錄嗎？');" style="margin:0;">
             <button type="submit" class="btn btn-danger btn-sm">🗑 刪除整筆任務</button>
         </form>
+        <a href="/voyage-tasks/{{ voyage.id }}/print" target="_blank" class="btn btn-primary btn-sm">🖨 列印報表</a>
         <a href="/voyage-tasks" class="btn btn-secondary btn-sm">← 返回清單</a>
     </div>
 </div>

@@ -5,7 +5,7 @@ from fastapi.responses import RedirectResponse
 
 import models
 from database import engine
-from routers import ships, voyages, charge_items, invoices, invoice_lines
+from routers import ships, voyages, charge_items, invoices, invoice_lines, customers
 
 # 建立所有資料表
 models.Base.metadata.create_all(bind=engine)
@@ -21,6 +21,7 @@ app.include_router(voyages.router)
 app.include_router(charge_items.router)
 app.include_router(invoices.router)
 app.include_router(invoice_lines.router)
+app.include_router(customers.router)
 
 
 @app.get("/")

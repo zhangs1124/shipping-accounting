@@ -49,6 +49,19 @@ class ChargeItem(Base):
     invoice_lines = relationship("InvoiceLine", back_populates="charge_item")
 
 
+class Customer(Base):
+    __tablename__ = "customers"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, unique=True, nullable=False, index=True)
+    contact = Column(String)
+    phone = Column(String)
+    email = Column(String)
+    address = Column(String)
+    created_at = Column(DateTime, default=func.now())
+    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
+
+
 class Invoice(Base):
     __tablename__ = "invoices"
 

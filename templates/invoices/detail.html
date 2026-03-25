@@ -8,7 +8,7 @@
         <form method="post" action="/invoices/{{ invoice.id }}/duplicate" style="display:flex; gap:6px; align-items:center;">
             <label style="font-size:0.82rem; color:#555;">新日期</label>
             <input type="date" name="new_invoice_date" value="{{ today_str }}" required style="padding:6px 8px; border:1px solid #ced4da; border-radius:4px;">
-            <button type="submit" class="btn btn-primary">📄 套用到新費用單</button>
+            <button type="submit" class="btn btn-primary">📄 套用</button>
         </form>
         <a href="/invoices/{{ invoice.id }}/export-csv" class="btn btn-success">⬇ 匯出 CSV</a>
         <a href="/invoices/report/export-excel?voyage_id={{ invoice.voyage_id }}&status={{ invoice.status }}&date_from={{ invoice.invoice_date.strftime('%Y-%m-%d') }}&date_to={{ invoice.invoice_date.strftime('%Y-%m-%d') }}"

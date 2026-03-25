@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}客戶管理{% endblock %}
+{% block content %}
+
+<div class="page-header">
+    <h1>👥 客戶管理</h1>
+    <div style="display:flex; gap:8px; align-items:center;">
+        <a href="/customers/new" class="btn btn-primary">＋ 新增客戶</a>
+    </div>
+</div>
+
+{% if request.query_params.get('error') %}
+<div class="alert alert-error">{{ request.query_params.get('error') }}</div>
+{% endif %}
+
+<div class="card">
+    <table>
+        <thead>
+            <tr>
+                <th>客戶名稱</th>
+                <th>聯絡人</th>
+                <th>電話</th>
+                <th>電子信箱</th>
+                <th class="text-center">操作</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for c in customers %}
+            <tr>
+                <td><strong>{{ c.name }}</strong></td>
+                <td>{{ c.contact or '' }}</td>
+                <td>{{ c.phone or '' }}</td>
+                <td>{{ c.email or '' }}</td>
+                <td class="text-center">
+                    <a href="/customers/{{ c.id }}/edit" class="btn btn-warning btn-sm">編輯</a>
+                    <form method="post"
+                          action="/customers/{{ c.id }}/delete"
+                          style="display:inline"
+                          onsubmit="return confirm('確定刪除此客戶？');">
+                        <button type="submit" class="btn btn-danger btn-sm">刪除</button>
+                    </form>
+                </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="5" class="text-center" style="color:#999; padding:24px;">尚無客戶資料</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% endblock %}
+

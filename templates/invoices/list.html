@@ -112,7 +112,7 @@
                             style="margin-left:6px;"
                             onclick="openDuplicateModal('{{ inv.id }}', '{{ inv.invoice_no }}')"
                             {% if not inv.lines %}disabled title="來源帳單無明細，無法套用"{% endif %}>
-                        套用到新單
+                        套用
                     </button>
                     {% endif %}
                 </td>
@@ -128,7 +128,7 @@
 <div class="modal-overlay" id="duplicateModal">
     <div class="modal">
         <div class="modal-header">
-            <h2>套用到新費用單</h2>
+            <h2>套用</h2>
             <button type="button" class="modal-close" onclick="closeDuplicateModal()">&times;</button>
         </div>
         <form method="post" id="duplicateForm">

@@ -13,6 +13,7 @@ from routers import auth, ships, voyages, charge_items, invoices, invoice_lines,
 from apscheduler.schedulers.background import BackgroundScheduler
 from tasks.invoice_reminders import check_overdue_invoices
 from tasks.backup_tasks import backup_sqlite_db
+from tasks.reminder_tasks import generate_task_reminders
 from utils.auth import get_current_user, check_permissions
 from utils.templates import templates
 

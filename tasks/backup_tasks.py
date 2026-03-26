@@ -52,6 +52,9 @@ def cleanup_old_backups():
     
     count = 0
     try:
+        if not os.path.exists(BACKUP_DIR):
+            return
+            
         for filename in os.listdir(BACKUP_DIR):
             if filename.startswith("shipping_backup_") and filename.endswith(".db"):
                 file_path = os.path.join(BACKUP_DIR, filename)

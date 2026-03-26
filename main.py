@@ -9,7 +9,7 @@ from jose import jwt, JWTError
 from sqlalchemy.orm import joinedload
 import models
 from database import engine, SessionLocal
-from routers import auth, ships, voyages, charge_items, invoices, invoice_lines, customers, voyage_tasks, task_categories
+from routers import auth, ships, voyages, charge_items, invoices, invoice_lines, customers, voyage_tasks, task_categories, departments, employees
 from apscheduler.schedulers.background import BackgroundScheduler
 from tasks.invoice_reminders import check_overdue_invoices
 from utils.auth import get_current_user, check_permissions
@@ -80,6 +80,8 @@ app.include_router(invoice_lines.router, dependencies=[Depends(get_current_user)
 app.include_router(customers.router, dependencies=[Depends(get_current_user)])
 app.include_router(voyage_tasks.router, dependencies=[Depends(get_current_user)])
 app.include_router(task_categories.router, dependencies=[Depends(get_current_user)])
+app.include_router(departments.router, dependencies=[Depends(get_current_user)])
+app.include_router(employees.router, dependencies=[Depends(get_current_user)])
 
 
 @app.get("/login")

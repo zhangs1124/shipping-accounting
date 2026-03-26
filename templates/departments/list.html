@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+
+{% block title %}部門管理 - 船務部帳務系統{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1><i class="fas fa-sitemap"></i> 部門管理</h1>
+    <button class="btn btn-primary" onclick="openModal()">+ 新增部門</button>
+</div>
+
+<div class="card">
+    <table>
+        <thead>
+            <tr>
+                <th width="80">ID</th>
+                <th width="200">部門名稱</th>
+                <th>描述</th>
+                <th width="150" class="text-center">操作</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for dept in departments %}
+            <tr id="dept-row-{{ dept.id }}">
+                <td>{{ dept.id }}</td>
+                <td class="dept-name">{{ dept.name }}</td>
+                <td class="dept-desc">{{ dept.description or '' }}</td>
+                <td class="text-center">
+                    <button class="btn btn-sm btn-primary" onclick="editDept({{ dept.id }}, '{{ dept.name }}', '{{ dept.description or '' }}')">
+                        <i class="fas fa-edit"></i> 編輯
+                    </button>
+                    <button class="btn btn-sm btn-danger" onclick="deleteDept({{ dept.id }}, '{{ dept.name }}')">
+                        <i class="fas fa-trash"></i> 刪除
+                    </button>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- 新增/編輯 Modal -->
+<div id="deptModal" class="modal-overlay">
+    <div class="modal">
+        <div class="modal-header">
+            <h2 id="modalTitle">新增部門</h2>
+            <button class="modal-close" onclick="closeModal()">&times;</button>
+        </div>
+        <form id="deptForm" onsubmit="handleFormSubmit(event)">
+            <input type="hidden" id="dept_id" name="dept_id">
+            <div class="form-group">
+                <label for="name">部門名稱</label>
+                <input type="text" id="name" name="name" required placeholder="例如：會計部">
+            </div>
+            <div class="form-group" style="margin-top: 15px;">
+                <label for="description">描述</label>
+                <textarea id="description" name="description" rows="3" placeholder="部門職責說明..."></textarea>
+            </div>
+            <div class="form-actions" style="margin-top: 20px; justify-content: flex-end;">
+                <button type="button" class="btn btn-secondary" onclick="closeModal()">取消</button>
+                <button type="submit" class="btn btn-primary" id="saveBtn">儲存</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    const modal = document.getElementById('deptModal');
+    const form = document.getElementById('deptForm');
+
+    function openModal(isEdit = false) {
+        document.getElementById('modalTitle').textContent = isEdit ? '編輯部門' : '新增部門';
+        modal.classList.add('active');
+    }
+
+    function closeModal() {
+        modal.classList.remove('active');
+        form.reset();
+        document.getElementById('dept_id').value = '';
+    }
+
+    function editDept(id, name, desc) {
+        document.getElementById('dept_id').value = id;
+        document.getElementById('name').value = name;
+        document.getElementById('description').value = desc;
+        openModal(true);
+    }
+
+    async function handleFormSubmit(e) {
+        e.preventDefault();
+        const id = document.getElementById('dept_id').value;
+        const formData = new FormData(form);
+        const url = id ? `/departments/api/${id}/edit` : '/departments/api';
+
+        try {
+            const response = await fetch(url, {
+                method: 'POST',
+                body: formData
+            });
+            const data = await response.json();
+            if (response.ok) {
+                location.reload(); // 簡單起見，成功後重新整理
+            } else {
+                alert(data.error || '儲存失敗');
+            }
+        } catch (err) {
+            alert('系統錯誤');
+        }
+    }
+
+    async function deleteDept(id, name) {
+        if (!confirm(`確定要刪除部門「${name}」方？此操作不可恢復。`)) return;
+
+        try {
+            const response = await fetch(`/departments/api/${id}/delete`, { method: 'POST' });
+            const data = await response.json();
+            if (response.ok) {
+                location.reload();
+            } else {
+                alert(data.error || '刪除失敗');
+            }
+        } catch (err) {
+            alert('系統錯誤');
+        }
+    }
+</script>
+{% endblock %}

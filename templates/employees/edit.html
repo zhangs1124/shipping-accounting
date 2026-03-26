@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+
+{% block title %}{{ '編輯員工' if employee else '新增員工' }} - 船務部帳務系統{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1><i class="fas fa-user-{{ 'edit' if employee else 'plus' }}"></i> {{ '編輯員工' if employee else '新增員工' }}</h1>
+    <a href="/employees" class="btn btn-secondary">返回列表</a>
+</div>
+
+<div class="card" style="max-width: 800px; margin: 0 auto;">
+    <form action="{{ '/employees/' ~ employee.id ~ '/edit' if employee else '/employees/new' }}" method="POST">
+        <div class="form-grid">
+            <div class="form-group">
+                <label for="username">使用者帳號 (不可修改)</label>
+                <input type="text" id="username" name="username" value="{{ employee.username if employee else '' }}" 
+                       {{ 'readonly' if employee else 'required' }} class="{{ 'readonly' if employee else '' }}">
+            </div>
+            <div class="form-group">
+                <label for="password">{{ '變更密碼 (留空則不修改)' if employee else '密碼' }}</label>
+                <input type="password" id="password" name="password" {{ 'required' if not employee else '' }}>
+            </div>
+            <div class="form-group">
+                <label for="full_name">真實姓名</label>
+                <input type="text" id="full_name" name="full_name" value="{{ employee.full_name if employee else '' }}" required>
+            </div>
+            <div class="form-group">
+                <label for="email">電子郵件</label>
+                <input type="email" id="email" name="email" value="{{ employee.email or '' }}">
+            </div>
+            <div class="form-group">
+                <label for="department_id">部門</label>
+                <select id="department_id" name="department_id" required>
+                    <option value="">-- 請選擇部門 --</option>
+                    {% for dept in departments %}
+                    <option value="{{ dept.id }}" {{ 'selected' if employee and employee.department_id == dept.id else '' }}>
+                        {{ dept.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="role_id">權限角色</label>
+                <select id="role_id" name="role_id" required>
+                    <option value="">-- 請選擇角色 --</option>
+                    {% for role in roles %}
+                    <option value="{{ role.id }}" {{ 'selected' if employee and employee.role_id == role.id else '' }}>
+                        {{ role.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            {% if employee %}
+            <div class="form-group">
+                <label for="is_active">帳號狀態</label>
+                <select id="is_active" name="is_active">
+                    <option value="1" {{ 'selected' if employee.is_active == 1 else '' }}>啟用</option>
+                    <option value="0" {{ 'selected' if employee.is_active == 0 else '' }}>停用</option>
+                </select>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="form-actions" style="margin-top: 30px; justify-content: center;">
+            <button type="submit" class="btn btn-primary" style="padding: 10px 40px; font-size: 1.1rem;">
+                <i class="fas fa-save"></i> 儲存資料
+            </button>
+        </div>
+    </form>
+</div>
+
+<style>
+    .readonly {
+        background-color: #f8f9fa;
+        cursor: not-allowed;
+    }
+</style>
+{% endblock %}

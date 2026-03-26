@@ -43,8 +43,8 @@ def start_scheduler():
     # 5. 系統啟動時先做一次備份，確保檔案及權限正常
     scheduler.add_job(backup_sqlite_db, 'date', run_date=datetime.now(), id="startup_backup")
     
-    # 每 15 分鐘執行一次提醒掃描
-    scheduler.add_job(generate_task_reminders, 'interval', minutes=15)
+    # 每 1 分鐘執行一次提醒掃描
+    scheduler.add_job(generate_task_reminders, 'interval', minutes=1)
     
     # 啟動時也執行一次
     scheduler.add_job(generate_task_reminders, 'date', run_date=datetime.now())

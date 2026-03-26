@@ -135,8 +135,12 @@ def generate_task_reminders():
             if reminder.frequency == "DAILY":
                 # 下一次定於明天同時間
                 reminder.next_remind_at = reminder.next_remind_at + timedelta(days=1)
+            elif reminder.frequency == "HOURLY":
+                reminder.next_remind_at = reminder.next_remind_at + timedelta(hours=1)
+            elif reminder.frequency == "MINUTELY":
+                reminder.next_remind_at = reminder.next_remind_at + timedelta(minutes=1)
             else:
-                # 單次提醒：為避免重複發信，將時間推到遙遠的未來 (或可以加上一個 status)
+                # 單次提醒：為避免重複發信，將時間推到遙遠的未來
                 reminder.next_remind_at = now + timedelta(days=3650)
         
         db.commit()

@@ -22,10 +22,7 @@ def list_reminders(
     now = datetime.now()
     query = db.query(models.Reminder).options(
         joinedload(models.Reminder.target_employee)
-    ).filter(
-        models.Reminder.is_closed == 0,
-        (models.Reminder.next_remind_at == None) | (models.Reminder.next_remind_at <= now)
-    )
+    ).filter(models.Reminder.is_closed == 0)
     
     # 權限控管：非 Admin 僅能看自己的提醒
     is_admin = current_user.role and current_user.role.name == "Admin"

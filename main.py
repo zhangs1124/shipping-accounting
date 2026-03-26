@@ -40,8 +40,6 @@ def start_scheduler():
     
     # 4. 資料庫循環備份：每小時整點 (時:00) 執行一次
     scheduler.add_job(backup_sqlite_db, 'cron', hour='*', minute=0, id="database_backup")
-    # 5. 系統啟動時先做一次備份，確保檔案及權限正常
-    scheduler.add_job(backup_sqlite_db, 'date', run_date=datetime.now(), id="startup_backup")
     
     # 每 15 分鐘執行一次提醒掃描
     scheduler.add_job(generate_task_reminders, 'interval', minutes=15)

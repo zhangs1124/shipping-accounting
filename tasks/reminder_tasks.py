@@ -2,6 +2,7 @@ from datetime import datetime, timedelta
 from sqlalchemy.orm import Session
 import models
 from database import SessionLocal
+from utils.mailer import send_email
 
 def generate_task_reminders():
     """
@@ -73,6 +74,28 @@ def generate_task_reminders():
                         )
                         db.add(new_reminder)
                         print(f"產生提醒：{new_reminder.title} -> 給人員 ID {operator_id}")
+                        
+                        # 寄信通知 zhangj1124@gmail.com
+                        try:
+                            html_content = f"""
+                            <html>
+                            <body>
+                                <h2>中央提醒中心 - 新增逾期任務</h2>
+                                <p><strong>標題：</strong> {new_reminder.title}</p>
+                                <p><strong>內容：</strong> {new_reminder.content}</p>
+                                <p><strong>負責人員 ID：</strong> {operator_id}</p>
+                                <hr>
+                                <p>此為系統自動發送的信件，請勿直接回覆。</p>
+                            </body>
+                            </html>
+                            """
+                            send_email(
+                                subject=new_reminder.title,
+                                body=html_content,
+                                to_email="zhangj1124@gmail.com"
+                            )
+                        except Exception as email_err:
+                            print(f"寄送提醒信件失敗: {email_err}")
         
         db.commit()
     except Exception as e:

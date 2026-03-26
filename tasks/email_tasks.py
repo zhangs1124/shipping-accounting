@@ -4,6 +4,7 @@ from email.mime.multipart import MIMEMultipart
 from datetime import date, datetime, timedelta
 import os
 from dotenv import load_dotenv
+from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 import models
@@ -49,13 +50,21 @@ def check_and_send_reminders():
     print(f"[{datetime.now()}] 開始執行逾期帳單檢查任務...")
     db = SessionLocal()
     try:
-        # 逾期條件：超過 7 天未完成且尚未提醒過
+        # 逾期標準：7 天前
         seven_days_ago = date.today() - timedelta(days=7)
+        # 重複提醒標準：3 天前
+        three_days_ago = datetime.now() - timedelta(days=3)
+
         overdue_invoices = (
             db.query(models.Invoice)
             .filter(models.Invoice.status != "已收款")
             .filter(models.Invoice.invoice_date <= seven_days_ago)
-            .filter(models.Invoice.is_reminded == 0)
+            .filter(
+                or_(
+                    models.Invoice.is_reminded == 0,
+                    models.Invoice.last_reminded_at <= three_days_ago
+                )
+            )
             .all()
         )
 
@@ -64,7 +73,9 @@ def check_and_send_reminders():
             return
 
         for inv in overdue_invoices:
-            subject = f"【逾期提醒】帳單編號：{inv.invoice_no} 已逾 7 天未結清"
+            is_repeat = inv.is_reminded == 1
+            type_str = "【重複催收】" if is_repeat else "【逾期提醒】"
+            subject = f"{type_str} 帳單編號：{inv.invoice_no} 已逾 7 天未結清"
             html = f"""
             <html>
                 <body>

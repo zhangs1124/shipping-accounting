@@ -14,6 +14,7 @@
     <nav class="navbar">
         <div class="nav-brand">⚓ 船務部帳務系統</div>
         <ul class="nav-links">
+            {% if current_user %}
             <li><a href="/invoices">帳務管理</a></li>
             <li><a href="/voyage-tasks">進出港</a></li>
             <li class="dropdown">
@@ -26,6 +27,13 @@
                     <a href="/charge-items">收費項目</a>
                 </div>
             </li>
+            <li class="user-info">
+                <span class="user-name">👤 {{ current_user.full_name }} ({{ current_user.role.name if current_user.role else '員工' }})</span>
+                <a href="/auth/logout" class="logout-link">登出</a>
+            </li>
+            {% else %}
+            <li><a href="/login">登入</a></li>
+            {% endif %}
         </ul>
     </nav>
 

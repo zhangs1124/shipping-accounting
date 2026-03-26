@@ -1,14 +1,19 @@
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, status, Depends
 from datetime import datetime
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import RedirectResponse
 
+import os
+from jose import jwt, JWTError
+from sqlalchemy.orm import joinedload
 import models
-from database import engine
-from routers import ships, voyages, charge_items, invoices, invoice_lines, customers, voyage_tasks, task_categories
+from database import engine, SessionLocal
+from routers import auth, ships, voyages, charge_items, invoices, invoice_lines, customers, voyage_tasks, task_categories
 from apscheduler.schedulers.background import BackgroundScheduler
 from tasks.invoice_reminders import check_overdue_invoices
+from utils.auth import get_current_user, check_permissions
+from utils.templates import templates
 
 # 建立所有資料表
 models.Base.metadata.create_all(bind=engine)
@@ -35,18 +40,56 @@ def start_scheduler():
         scheduler.start()
         print(f">>> [系統訊息] 自動提醒排程已啟動。目前時間: {datetime.now()}")
 
+SECRET_KEY = os.getenv("SECRET_KEY")
+ALGORITHM = os.getenv("ALGORITHM", "HS256")
+
+@app.middleware("http")
+async def add_user_to_request(request: Request, call_next):
+    token = request.cookies.get("access_token")
+    request.state.user = None
+    if token:
+        try:
+            payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+            username: str = payload.get("sub")
+            if username:
+                db = SessionLocal()
+                # 使用 joinedload 預先載入角色與部門資訊，避免 DetachedInstanceError
+                user = db.query(models.Employee).options(
+                    joinedload(models.Employee.role),
+                    joinedload(models.Employee.department)
+                ).filter(models.Employee.username == username).first()
+                if user and user.is_active:
+                    request.state.user = user
+                db.close()
+        except (JWTError, Exception):
+            pass
+    response = await call_next(request)
+    return response
+
 app.mount("/static", StaticFiles(directory="static"), name="static")
-templates = Jinja2Templates(directory="templates")
+# templates 已從 utils.templates 匯入
 
 # 掛載路由
-app.include_router(ships.router)
-app.include_router(voyages.router)
-app.include_router(charge_items.router)
-app.include_router(invoices.router)
-app.include_router(invoice_lines.router)
-app.include_router(customers.router)
-app.include_router(voyage_tasks.router)
-app.include_router(task_categories.router)
+app.include_router(auth.router)
+# 以下路由皆需登入後才可存取
+app.include_router(ships.router, dependencies=[Depends(get_current_user)])
+app.include_router(voyages.router, dependencies=[Depends(get_current_user)])
+app.include_router(charge_items.router, dependencies=[Depends(get_current_user)])
+app.include_router(invoices.router, dependencies=[Depends(get_current_user)])
+app.include_router(invoice_lines.router, dependencies=[Depends(get_current_user)])
+app.include_router(customers.router, dependencies=[Depends(get_current_user)])
+app.include_router(voyage_tasks.router, dependencies=[Depends(get_current_user)])
+app.include_router(task_categories.router, dependencies=[Depends(get_current_user)])
+
+
+@app.get("/login")
+def login_page(request: Request):
+    return templates.TemplateResponse("login.html", {"request": request})
+
+
+@app.exception_handler(status.HTTP_401_UNAUTHORIZED)
+async def unauthorized_exception_handler(request: Request, exc: Exception):
+    return RedirectResponse(url="/login")
 
 
 @app.get("/")

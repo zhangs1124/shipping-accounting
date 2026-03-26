@@ -1,13 +1,12 @@
 from fastapi import APIRouter, Depends, Request, Form
 from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
-from fastapi.templating import Jinja2Templates
+from utils.templates import templates
 from sqlalchemy.orm import Session
 
 import models
 from database import get_db
 
 router = APIRouter(prefix="/ships", tags=["ships"])
-templates = Jinja2Templates(directory="templates")
 
 
 @router.get("", response_class=HTMLResponse)

@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, Request, Form, HTTPException
 from fastapi.responses import HTMLResponse, RedirectResponse, StreamingResponse
-from fastapi.templating import Jinja2Templates
+from utils.templates import templates
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 from typing import Optional
@@ -16,7 +16,6 @@ import models
 from database import get_db
 
 router = APIRouter(prefix="/invoices", tags=["invoices"])
-templates = Jinja2Templates(directory="templates")
 
 INVOICE_STATUSES = ["草稿", "已開立", "已收款"]
 

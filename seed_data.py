@@ -6,6 +6,7 @@ from decimal import Decimal
 from datetime import date
 from database import SessionLocal, engine
 import models
+from utils.auth import get_password_hash
 
 models.Base.metadata.create_all(bind=engine)
 db = SessionLocal()
@@ -13,11 +14,17 @@ db = SessionLocal()
 # 清除舊資料（依外鍵順序）
 db.query(models.InvoiceLine).delete()
 db.query(models.Invoice).delete()
+db.query(models.VoyageTaskLog).delete()
 db.query(models.Voyage).delete()
 db.query(models.Ship).delete()
 db.query(models.ChargeItem).delete()
-db.query(models.VoyageTaskLog).delete()
 db.query(models.TaskCategory).delete()
+db.query(models.Employee).delete()
+db.query(models.Permission).delete()
+db.query(models.Role).delete()
+db.query(models.Department).delete()
+# role_permissions 是 Table 對象，SQLAlchemy 會自動處理關聯刪除，若不行則需手動
+db.execute(models.role_permissions.delete())
 db.commit()
 db.commit()
 
@@ -147,7 +154,51 @@ t += add_line(invoices[2], charge_items[4], 1)           # 引水費
 t += add_line(invoices[2], charge_items[7], 5, 500, "TWD", "5天倉儲")
 invoices[2].total_amount = t
 
+# ── 驗證資料 ──────────────────────────────────────
+# 部門
+dept_admin = models.Department(name="資訊部", description="系統維護與管理")
+dept_acc = models.Department(name="會計部", description="帳務與發票管理")
+dept_ops = models.Department(name="航務部", description="現場作業與調度")
+db.add_all([dept_admin, dept_acc, dept_ops])
 db.commit()
+
+# 權限
+perms = [
+    models.Permission(code="invoice:view", name="檢視發票"),
+    models.Permission(code="invoice:create", name="建立發票"),
+    models.Permission(code="invoice:delete", name="刪除發票"),
+    models.Permission(code="voyage:view", name="檢視航次"),
+    models.Permission(code="voyage:edit", name="編輯航次"),
+]
+db.add_all(perms)
+db.commit()
+
+# 角色
+role_admin = models.Role(name="Admin")
+role_acc = models.Role(name="Accounting")
+role_ops = models.Role(name="Operator")
+db.add_all([role_admin, role_acc, role_ops])
+db.commit()
+
+# 賦予角色權限
+role_admin.permissions = perms
+role_acc.permissions = [p for p in perms if "invoice" in p.code]
+role_ops.permissions = [p for p in perms if "voyage" in p.code]
+db.commit()
+
+# 員工
+admin_user = models.Employee(
+    username="admin",
+    hashed_password=get_password_hash("admin123"),
+    full_name="系統管理員",
+    email="admin@example.com",
+    department_id=dept_admin.id,
+    role_id=role_admin.id,
+    is_active=1
+)
+db.add(admin_user)
+db.commit()
+
 db.close()
 
 print("✅ 範例資料建立完成！")
@@ -155,3 +206,4 @@ print(f"   船舶：{len(ships)} 筆")
 print(f"   航次：{len(voyages)} 筆")
 print(f"   收費項目：{len(charge_items)} 筆")
 print(f"   帳務主項目：{len(invoices)} 筆（含明細）")
+print(f"   帳號：admin / admin123")

@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>登入 - 船務部帳務系統</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #3b82f6;
+            --primary-hover: #2563eb;
+            --bg-gradient: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+            --glass-bg: rgba(255, 255, 255, 0.05);
+            --glass-border: rgba(255, 255, 255, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', 'Noto Sans TC', sans-serif;
+        }
+
+        body {
+            background: var(--bg-gradient);
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            overflow: hidden;
+        }
+
+        .login-container {
+            width: 100%;
+            max-width: 400px;
+            padding: 2.5rem;
+            background: var(--glass-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--glass-border);
+            border-radius: 2rem;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            animation: fadeIn 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 2.5rem;
+        }
+
+        .header h1 {
+            font-size: 2.2rem;
+            font-weight: 800;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(to right, #60a5fa, #c084fc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -0.025em;
+        }
+
+        .header p {
+            color: #94a3b8;
+            font-size: 1rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.6rem;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: #e2e8f0;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 0.9rem 1.2rem;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--glass-border);
+            border-radius: 1rem;
+            color: white;
+            font-size: 1rem;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        .form-group input:focus {
+            border-color: var(--primary-color);
+            background: rgba(0, 0, 0, 0.4);
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15);
+        }
+
+        .login-btn {
+            width: 100%;
+            padding: 1rem;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 1rem;
+            font-size: 1.1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 1.5rem;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+
+        .login-btn:hover {
+            background: var(--primary-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+        }
+
+        .login-btn:active {
+            transform: translateY(0);
+        }
+
+        .error-msg {
+            background: rgba(239, 68, 68, 0.15);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            color: #fca5a5;
+            padding: 1rem;
+            border-radius: 1rem;
+            font-size: 0.9rem;
+            margin-bottom: 1.5rem;
+            display: none;
+            text-align: center;
+            animation: shake 0.4s ease-in-out;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+
+        .footer-info {
+            text-align: center;
+            margin-top: 2rem;
+            font-size: 0.8rem;
+            color: #64748b;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="header">
+            <h1>Voyage Flow</h1>
+            <p>航運會計管理系統</p>
+        </div>
+
+        <div id="error-box" class="error-msg"></div>
+
+        <form id="login-form">
+            <div class="form-group">
+                <label for="username">使用者名稱</label>
+                <input type="text" id="username" name="username" required placeholder="帳號" autocomplete="username">
+            </div>
+            <div class="form-group">
+                <label for="password">密碼</label>
+                <input type="password" id="password" name="password" required placeholder="密碼" autocomplete="current-password">
+            </div>
+            <button type="submit" class="login-btn">進入系統</button>
+        </form>
+
+        <div class="footer-info">
+            &copy; 2026 Voyage Shipping Accounting
+        </div>
+    </div>
+
+    <script>
+        const form = document.getElementById('login-form');
+        const errorBox = document.getElementById('error-box');
+
+        form.onsubmit = async (e) => {
+            e.preventDefault();
+            errorBox.style.display = 'none';
+            
+            const submitBtn = form.querySelector('button');
+            submitBtn.textContent = '驗證中...';
+            submitBtn.disabled = true;
+
+            try {
+                const formData = new FormData(form);
+                const response = await fetch('/auth/login', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (response.ok) {
+                    window.location.href = '/';
+                } else {
+                    const data = await response.json();
+                    let msg = '登入失敗';
+                    if (data.detail) {
+                        if (Array.isArray(data.detail)) {
+                            msg = data.detail[0].msg;
+                        } else {
+                            msg = data.detail;
+                        }
+                    }
+                    errorBox.textContent = msg;
+                    errorBox.style.display = 'block';
+                }
+            } catch (err) {
+                errorBox.textContent = '連線伺服器失敗，請稍後再試';
+                errorBox.style.display = 'block';
+            } finally {
+                submitBtn.textContent = '進入系統';
+                submitBtn.disabled = false;
+            }
+        };
+    </script>
+</body>
+</html>

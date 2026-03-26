@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, Request, Form
-from fastapi.responses import HTMLResponse, RedirectResponse
-from fastapi.templating import Jinja2Templates
+from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
+from utils.templates import templates
 from sqlalchemy.orm import Session
 from typing import Optional
 
@@ -8,7 +8,6 @@ import models
 from database import get_db
 
 router = APIRouter(prefix="/customers", tags=["customers"])
-templates = Jinja2Templates(directory="templates")
 
 
 @router.get("", response_class=HTMLResponse)

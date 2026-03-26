@@ -1,6 +1,65 @@
-from sqlalchemy import Column, Integer, String, Date, Numeric, DateTime, ForeignKey, func
+from sqlalchemy import Column, Integer, String, Date, Numeric, DateTime, ForeignKey, Table, func
 from sqlalchemy.orm import relationship
 from database import Base
+
+
+class Department(Base):
+    __tablename__ = "departments"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, unique=True, nullable=False)
+    description = Column(String)
+    created_at = Column(DateTime, default=func.now())
+
+    employees = relationship("Employee", back_populates="department")
+
+
+# 角色與權限的多對多關聯表
+role_permissions = Table(
+    "role_permissions",
+    Base.metadata,
+    Column("role_id", Integer, ForeignKey("roles.id"), primary_key=True),
+    Column("permission_id", Integer, ForeignKey("permissions.id"), primary_key=True)
+)
+
+
+class Role(Base):
+    __tablename__ = "roles"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, unique=True, nullable=False) # e.g., Admin, Accounting, Operator
+    created_at = Column(DateTime, default=func.now())
+
+    employees = relationship("Employee", back_populates="role")
+    permissions = relationship("Permission", secondary=role_permissions, back_populates="roles")
+
+
+class Permission(Base):
+    __tablename__ = "permissions"
+
+    id = Column(Integer, primary_key=True, index=True)
+    code = Column(String, unique=True, nullable=False) # e.g., 'invoice:create', 'voyage:view'
+    name = Column(String, nullable=False)
+
+    roles = relationship("Role", secondary=role_permissions, back_populates="permissions")
+
+
+class Employee(Base):
+    __tablename__ = "employees"
+
+    id = Column(Integer, primary_key=True, index=True)
+    username = Column(String, unique=True, nullable=False, index=True)
+    hashed_password = Column(String, nullable=False)
+    full_name = Column(String)
+    email = Column(String)
+    department_id = Column(Integer, ForeignKey("departments.id"))
+    role_id = Column(Integer, ForeignKey("roles.id"))
+    is_active = Column(Integer, default=1) # 1: 啟用, 0: 停用
+    created_at = Column(DateTime, default=func.now())
+    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
+
+    department = relationship("Department", back_populates="employees")
+    role = relationship("Role", back_populates="employees")
 
 
 class Ship(Base):

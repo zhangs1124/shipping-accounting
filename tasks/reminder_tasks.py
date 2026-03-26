@@ -96,6 +96,48 @@ def generate_task_reminders():
                             )
                         except Exception as email_err:
                             print(f"寄送提醒信件失敗: {email_err}")
+                            
+        # 4. 處理「手動自訂」的提醒
+        now = datetime.now()
+        due_manual_reminders = db.query(models.Reminder).filter(
+            models.Reminder.remind_type == "MANUAL_TASK",
+            models.Reminder.is_closed == 0,
+            models.Reminder.next_remind_at <= now
+        ).all()
+        
+        for reminder in due_manual_reminders:
+            print(f"觸發手動提醒：{reminder.title}")
+            
+            # 寄信通知 zhangj1124@gmail.com
+            try:
+                html_content = f"""
+                <html>
+                <body>
+                    <h2>中央提醒中心 - 手動設定排程觸發</h2>
+                    <p><strong>標題：</strong> {reminder.title}</p>
+                    <p><strong>內容：</strong> {reminder.content}</p>
+                    <p><strong>負責人員 ID：</strong> {reminder.target_employee_id}</p>
+                    <hr>
+                    <p>此任務尚未完成，請登入系統查看並處理。</p>
+                </body>
+                </html>
+                """
+                send_email(
+                    subject=reminder.title,
+                    body=html_content,
+                    to_email="zhangj1124@gmail.com"
+                )
+            except Exception as email_err:
+                print(f"寄送手動提醒信失敗: {email_err}")
+                
+            # 更新排程
+            reminder.last_reminded_at = now
+            if reminder.frequency == "DAILY":
+                # 下一次定於明天同時間
+                reminder.next_remind_at = reminder.next_remind_at + timedelta(days=1)
+            else:
+                # 單次提醒：為避免重複發信，將時間推到遙遠的未來 (或可以加上一個 status)
+                reminder.next_remind_at = now + timedelta(days=3650)
         
         db.commit()
     except Exception as e:

@@ -19,10 +19,14 @@ def list_reminders(
     current_user: models.Employee = Depends(get_current_user)
 ):
     """提醒中心清單頁面"""
+    now = datetime.now()
     query = db.query(models.Reminder).options(
         joinedload(models.Reminder.target_employee)
-    ).filter(models.Reminder.is_closed == 0)
-
+    ).filter(
+        models.Reminder.is_closed == 0,
+        (models.Reminder.next_remind_at == None) | (models.Reminder.next_remind_at <= now)
+    )
+    
     # 權限控管：非 Admin 僅能看自己的提醒
     is_admin = current_user.role and current_user.role.name == "Admin"
     
@@ -75,8 +79,55 @@ def get_unread_count(
     current_user: models.Employee = Depends(get_current_user)
 ):
     """取得當前使用者未處理提醒數量"""
+    now = datetime.now()
     count = db.query(models.Reminder).filter(
         models.Reminder.target_employee_id == current_user.id,
-        models.Reminder.is_closed == 0
+        models.Reminder.is_closed == 0,
+        (models.Reminder.next_remind_at == None) | (models.Reminder.next_remind_at <= now)
     ).count()
     return {"count": count}
+
+@router.post("/api/manual")
+def add_manual_reminder(
+    voyage_task_log_id: int = Form(...),
+    remind_at: str = Form(...),
+    frequency: str = Form("ONCE"),
+    db: Session = Depends(get_db),
+    current_user: models.Employee = Depends(get_current_user)
+):
+    """手動在進出港任務頁面加入自訂提醒"""
+    from datetime import datetime
+    try:
+        dt_remind = datetime.fromisoformat(remind_at.replace("T", " "))
+    except ValueError:
+        return JSONResponse({"error": "時間格式錯誤"}, status_code=400)
+        
+    # 尋找對應的 VoyageTaskLog，確保資料存在，並取得相關細節
+    log = db.query(models.VoyageTaskLog).filter(models.VoyageTaskLog.id == voyage_task_log_id).first()
+    if not log:
+        return JSONResponse({"error": "找不到該任務紀錄"}, status_code=404)
+        
+    voyage = log.voyage
+    category = log.task_category
+    
+    # 決定發送對象：優先使用航次操作員，若無則為當前設定者
+    target_emp_id = voyage.operator_id if voyage.operator_id else current_user.id
+
+    freq_label = "單次" if frequency == "ONCE" else "每次(每天)"
+    new_reminder = models.Reminder(
+        title=f"自訂提醒 ({freq_label})：{voyage.voyage_no} - {category.name}",
+        content=f"使用者 {current_user.full_name or current_user.username} 針對航次 {voyage.voyage_no} 的「{category.name}」設定了自訂關切排程，提醒時間到了！",
+        remind_type="MANUAL_TASK",
+        source_table="voyage_task_logs",
+        source_id=log.id,
+        target_employee_id=target_emp_id,
+        deadline=dt_remind,
+        frequency=frequency,
+        next_remind_at=dt_remind
+    )
+    db.add(new_reminder)
+    db.commit()
+    db.refresh(new_reminder)
+    
+    return {"status": "success", "message": "已成功加入提醒中心排程"}
+

@@ -93,6 +93,11 @@
                             onclick="openRecordModal({{ log.id }}, '{{ log.task_category.name | replace("'", "\\'") }}')">
                         🕒 紀錄
                     </button>
+                    <button class="btn btn-warning btn-sm"
+                            onclick="openManualRemindModal({{ log.id }}, '{{ log.task_category.name | replace("'", "\\'") }}')"
+                            title="手動加入提醒">
+                        🔔 提醒
+                    </button>
                     <button class="btn btn-secondary btn-sm"
                             onclick="clearTime({{ log.id }})"
                             title="清除時間">
@@ -164,6 +169,31 @@
     </div>
 </div>
 
+<!-- 手動提醒設定 Modal -->
+<div class="modal-overlay" id="manualRemindModal">
+    <div class="modal" style="max-width:440px;">
+        <div class="modal-header">
+            <h2 id="remindModalTitle">設定提醒</h2>
+            <button class="modal-close" onclick="closeRemindModal()">✕</button>
+        </div>
+        <div class="form-group" style="margin-bottom:16px;">
+            <label>提醒時間</label>
+            <input type="datetime-local" id="remindTimeInput" class="form-control">
+        </div>
+        <div class="form-group" style="margin-bottom:20px;">
+            <label>提醒頻率</label>
+            <select id="remindFreqInput" class="form-control">
+                <option value="ONCE">單次提醒 (時間到只提醒一次)</option>
+                <option value="DAILY">每次 (每日重複提醒直到任務完成)</option>
+            </select>
+        </div>
+        <div class="form-actions">
+            <button class="btn btn-primary" onclick="confirmManualRemind()">儲存提醒</button>
+            <button class="btn btn-secondary" onclick="closeRemindModal()">取消</button>
+        </div>
+    </div>
+</div>
+
 <script>
 let currentLogId = null;
 let dataTable = null;
@@ -210,6 +240,19 @@ function openRecordModal(logId, taskName) {
 
 function closeModal() {
     document.getElementById('recordModal').classList.remove('active');
+    currentLogId = null;
+}
+
+function openManualRemindModal(logId, taskName) {
+    currentLogId = logId;
+    document.getElementById('remindModalTitle').textContent = '設定提醒：' + taskName;
+    document.getElementById('remindTimeInput').value = getNow();
+    document.getElementById('remindFreqInput').value = "ONCE";
+    document.getElementById('manualRemindModal').classList.add('active');
+}
+
+function closeRemindModal() {
+    document.getElementById('manualRemindModal').classList.remove('active');
     currentLogId = null;
 }
 
@@ -271,6 +314,28 @@ async function confirmRecord() {
         closeModal();
     } else {
         alert('錯誤：' + (data.error || '無法儲存'));
+    }
+}
+
+async function confirmManualRemind() {
+    if (!currentLogId) return;
+    const t = document.getElementById('remindTimeInput').value;
+    const f = document.getElementById('remindFreqInput').value;
+    if (!t) { alert('請選擇提醒時間'); return; }
+
+    const body = new URLSearchParams({ 
+        voyage_task_log_id: currentLogId,
+        remind_at: t,
+        frequency: f
+    });
+    const res = await fetch(`/reminders/api/manual`, { method: 'POST', body });
+    const data = await res.json();
+
+    if (data.status === 'success') {
+        alert('✅ ' + data.message);
+        closeRemindModal();
+    } else {
+        alert('錯誤：' + (data.error || '無法加入提醒'));
     }
 }
 

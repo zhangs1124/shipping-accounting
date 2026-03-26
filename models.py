@@ -214,6 +214,12 @@ class Reminder(Base):
     target_employee_id = Column(Integer, ForeignKey("employees.id"), nullable=False)
     is_closed = Column(Integer, default=0) # 0: 處理中, 1: 已完成
     deadline = Column(DateTime)
+    
+    # 手動提醒擴充
+    frequency = Column(String, default="ONCE") # 'ONCE', 'DAILY'
+    last_reminded_at = Column(DateTime, nullable=True)
+    next_remind_at = Column(DateTime, nullable=True)
+    
     created_at = Column(DateTime, default=func.now())
     updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
 

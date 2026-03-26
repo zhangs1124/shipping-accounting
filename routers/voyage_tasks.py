@@ -408,6 +408,17 @@ def api_update_task_log(
     log.recorded_time = log_time
     if remarks is not None:
         log.remarks = remarks
+        
+    if log_time:
+        # 當任務完成時，自動結案所有相關之未結案提醒
+        open_reminders = db.query(models.Reminder).filter(
+            models.Reminder.source_table == "voyage_task_logs",
+            models.Reminder.source_id == log_id,
+            models.Reminder.is_closed == 0
+        ).all()
+        for r in open_reminders:
+            r.is_closed = 1
+            r.updated_at = datetime.now()
 
     db.commit()
     return {"status": "success"}

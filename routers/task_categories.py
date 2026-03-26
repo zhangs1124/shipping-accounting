@@ -3,6 +3,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 from utils.templates import templates
 from sqlalchemy.orm import Session
 from decimal import Decimal
+from typing import Optional
 
 import models
 from database import get_db

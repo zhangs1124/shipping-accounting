@@ -12,7 +12,7 @@ load_dotenv()
 
 # 通知收件人 (若不需要可移至外層設定，此處保留供發信使用)
 NOTIFICATION_RECIPIENT = os.getenv("NOTIFICATION_RECIPIENT")
-def check_and_send_reminders():
+def check_overdue_invoices():
     print(f"[{datetime.now()}] 開始執行逾期帳單檢查任務...")
     db = SessionLocal()
     try:

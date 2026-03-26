@@ -75,27 +75,33 @@ def generate_task_reminders():
                         db.add(new_reminder)
                         print(f"產生提醒：{new_reminder.title} -> 給人員 ID {operator_id}")
                         
-                        # 寄信通知 zhangj1124@gmail.com
-                        try:
-                            html_content = f"""
-                            <html>
-                            <body>
-                                <h2>中央提醒中心 - 新增逾期任務</h2>
-                                <p><strong>標題：</strong> {new_reminder.title}</p>
-                                <p><strong>內容：</strong> {new_reminder.content}</p>
-                                <p><strong>負責人員 ID：</strong> {operator_id}</p>
-                                <hr>
-                                <p>此為系統自動發送的信件，請勿直接回覆。</p>
-                            </body>
-                            </html>
-                            """
-                            send_email(
-                                subject=new_reminder.title,
-                                html_content=html_content,
-                                recipient="zhangj1124@gmail.com"
-                            )
-                        except Exception as email_err:
-                            print(f"寄送提醒信件失敗: {email_err}")
+                        # 寄信通知 target_employee 與 zhangj1124@gmail.com
+                        target_emp = db.query(models.Employee).filter(models.Employee.id == operator_id).first()
+                        recipients = {"zhangj1124@gmail.com"}
+                        if target_emp and target_emp.email:
+                            recipients.add(target_emp.email)
+                            
+                        for recp in recipients:
+                            try:
+                                html_content = f"""
+                                <html>
+                                <body>
+                                    <h2>中央提醒中心 - 新增逾期任務</h2>
+                                    <p><strong>標題：</strong> {new_reminder.title}</p>
+                                    <p><strong>內容：</strong> {new_reminder.content}</p>
+                                    <p><strong>負責人員 ID：</strong> {operator_id}</p>
+                                    <hr>
+                                    <p>此為系統自動發送的信件，請勿直接回覆。</p>
+                                </body>
+                                </html>
+                                """
+                                send_email(
+                                    subject=new_reminder.title,
+                                    html_content=html_content,
+                                    recipient=recp
+                                )
+                            except Exception as email_err:
+                                print(f"寄送提醒信件失敗給 {recp}: {email_err}")
                             
         # 4. 處理「手動自訂」的提醒
         now = datetime.now()
@@ -108,27 +114,32 @@ def generate_task_reminders():
         for reminder in due_manual_reminders:
             print(f"觸發手動提醒：{reminder.title}")
             
-            # 寄信通知 zhangj1124@gmail.com
-            try:
-                html_content = f"""
-                <html>
-                <body>
-                    <h2>中央提醒中心 - 手動設定排程觸發</h2>
-                    <p><strong>標題：</strong> {reminder.title}</p>
-                    <p><strong>內容：</strong> {reminder.content}</p>
-                    <p><strong>負責人員 ID：</strong> {reminder.target_employee_id}</p>
-                    <hr>
-                    <p>此任務尚未完成，請登入系統查看並處理。</p>
-                </body>
-                </html>
-                """
-                send_email(
-                    subject=reminder.title,
-                    html_content=html_content,
-                    recipient="zhangj1124@gmail.com"
-                )
-            except Exception as email_err:
-                print(f"寄送手動提醒信失敗: {email_err}")
+            # 寄信通知 target_employee_id 與 zhangj1124@gmail.com
+            recipients = {"zhangj1124@gmail.com"}
+            if reminder.target_employee and reminder.target_employee.email:
+                recipients.add(reminder.target_employee.email)
+                
+            for recp in recipients:
+                try:
+                    html_content = f"""
+                    <html>
+                    <body>
+                        <h2>中央提醒中心 - 手動設定排程觸發</h2>
+                        <p><strong>標題：</strong> {reminder.title}</p>
+                        <p><strong>內容：</strong> {reminder.content}</p>
+                        <p><strong>負責人員 ID：</strong> {reminder.target_employee_id}</p>
+                        <hr>
+                        <p>此任務尚未完成，請登入系統查看並處理。</p>
+                    </body>
+                    </html>
+                    """
+                    send_email(
+                        subject=reminder.title,
+                        html_content=html_content,
+                        recipient=recp
+                    )
+                except Exception as email_err:
+                    print(f"寄送手動提醒信失敗給 {recp}: {email_err}")
                 
             # 更新排程
             reminder.last_reminded_at = now

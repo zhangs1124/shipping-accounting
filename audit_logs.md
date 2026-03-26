@@ -1,0 +1,83 @@
+- generic [active] [ref=e1]:
+  - navigation [ref=e2]:
+    - generic [ref=e3]: ⚓ 船務部帳務系統
+    - list [ref=e4]:
+      - listitem [ref=e5]:
+        - link "帳務管理" [ref=e6] [cursor=pointer]:
+          - /url: /invoices
+      - listitem [ref=e7]:
+        - link "進出港" [ref=e8] [cursor=pointer]:
+          - /url: /voyage-tasks
+      - listitem [ref=e9]:
+        - link "🔔 提醒中心" [ref=e10] [cursor=pointer]:
+          - /url: /reminders
+      - listitem [ref=e11]:
+        - link "⚙️ 系統維護 ▾" [ref=e12] [cursor=pointer]:
+          - /url: javascript:void(0)
+      - listitem [ref=e13]:
+        - generic [ref=e14]: 👤 系統管理員 (Admin)
+        - link "登出" [ref=e15] [cursor=pointer]:
+          - /url: /auth/logout
+  - generic [ref=e17]:
+    - heading "📜 系統操作紀錄 (Audit Log)" [level=2] [ref=e19]
+    - generic [ref=e20]:
+      - generic [ref=e22]:
+        - text: 顯示
+        - combobox "顯示 筆結果" [ref=e23]:
+          - option "10"
+          - option "25"
+          - option "50" [selected]
+          - option "100"
+        - text: 筆結果
+      - generic [ref=e25]:
+        - text: 搜尋：
+        - searchbox "搜尋：" [ref=e26]
+      - table [ref=e27]:
+        - rowgroup [ref=e28]:
+          - row "編號：升冪排列 操作時間：升冪排列 使用者：升冪排列 來源 IP：升冪排列 動作類型：升冪排列 關聯表：升冪排列 資料 ID：升冪排列 異動內容詳情：升冪排列" [ref=e29]:
+            - columnheader "編號：升冪排列" [ref=e30] [cursor=pointer]: 編號
+            - columnheader "操作時間：升冪排列" [ref=e31] [cursor=pointer]: 操作時間
+            - columnheader "使用者：升冪排列" [ref=e32] [cursor=pointer]: 使用者
+            - columnheader "來源 IP：升冪排列" [ref=e33] [cursor=pointer]: 來源 IP
+            - columnheader "動作類型：升冪排列" [ref=e34] [cursor=pointer]: 動作類型
+            - columnheader "關聯表：升冪排列" [ref=e35] [cursor=pointer]: 關聯表
+            - columnheader "資料 ID：升冪排列" [ref=e36] [cursor=pointer]: 資料 ID
+            - columnheader "異動內容詳情：升冪排列" [ref=e37] [cursor=pointer]: 異動內容詳情
+        - rowgroup [ref=e38]:
+          - row "3 2026-03-26 04:02:26 系統管理員 test_ip UPDATE departments 5 檢視" [ref=e39]:
+            - cell "3" [ref=e40]
+            - cell "2026-03-26 04:02:26" [ref=e41]
+            - cell "系統管理員" [ref=e42]
+            - cell "test_ip" [ref=e43]
+            - cell "UPDATE" [ref=e44]:
+              - generic [ref=e45]: UPDATE
+            - cell "departments" [ref=e46]
+            - cell "5" [ref=e47]
+            - cell "檢視" [ref=e48]:
+              - button "檢視" [ref=e49] [cursor=pointer]
+          - row "2 2026-03-26 04:02:26 系統管理員 test_ip CREATE departments None 檢視" [ref=e50]:
+            - cell "2" [ref=e51]
+            - cell "2026-03-26 04:02:26" [ref=e52]
+            - cell "系統管理員" [ref=e53]
+            - cell "test_ip" [ref=e54]
+            - cell "CREATE" [ref=e55]:
+              - generic [ref=e56]: CREATE
+            - cell "departments" [ref=e57]
+            - cell "None" [ref=e58]
+            - cell "檢視" [ref=e59]:
+              - button "檢視" [ref=e60] [cursor=pointer]
+          - row "1 2026-03-26 12:00:38 系統管理員 127.0.0.1 LOGIN - - 無" [ref=e61]:
+            - cell "1" [ref=e62]
+            - cell "2026-03-26 12:00:38" [ref=e63]
+            - cell "系統管理員" [ref=e64]
+            - cell "127.0.0.1" [ref=e65]
+            - cell "LOGIN" [ref=e66]:
+              - generic [ref=e67]: LOGIN
+            - cell "-" [ref=e68]
+            - cell "-" [ref=e69]
+            - cell "無" [ref=e70]
+      - status [ref=e71]: 顯示第 1 至 3 筆結果，共 3 筆
+      - generic [ref=e72]:
+        - link "上一頁" [disabled] [ref=e73]
+        - link "1" [ref=e75] [cursor=pointer]
+        - link "下一頁" [disabled] [ref=e76]

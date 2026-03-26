@@ -14,10 +14,13 @@ from utils.auth import (
     ACCESS_TOKEN_EXPIRE_MINUTES
 )
 
+from utils.audit_logger import log_action
+
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 @router.post("/login")
 async def login_for_access_token(
+    request: Request,
     response: Response,
     form_data: OAuth2PasswordRequestForm = Depends(),
     db: Session = Depends(get_db)
@@ -47,10 +50,19 @@ async def login_for_access_token(
         samesite="lax"
     )
     
+    # 紀錄登入動作
+    client_ip = request.client.host if request.client else None
+    log_action(db, action="LOGIN", user_id=user.id, ip_address=client_ip)
+    db.commit()
+    
     return {"access_token": access_token, "token_type": "bearer"}
 
 @router.get("/logout")
-async def logout(response: Response):
+async def logout(response: Response, db: Session = Depends(get_db)):
+    # 由於登出是在 Request 中帶有 Cookie 呼叫的，middleware 已經設置了 Audit Context
+    log_action(db, action="LOGOUT")
+    db.commit()
+    
     response.delete_cookie("access_token")
     return RedirectResponse(url="/login", status_code=status.HTTP_302_FOUND)
 

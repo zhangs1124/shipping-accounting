@@ -1,0 +1,15 @@
+- generic [ref=e2]:
+  - generic [ref=e3]:
+    - heading "Voyage Flow" [level=1] [ref=e4]
+    - paragraph [ref=e5]: 航運會計管理系統
+  - generic [ref=e6]:
+    - generic [ref=e7]:
+      - generic [ref=e8]: 使用者名稱
+      - textbox "使用者名稱" [ref=e9]:
+        - /placeholder: 帳號
+        - text: admin
+    - generic [ref=e10]:
+      - generic [ref=e11]: 密碼
+      - textbox "密碼" [ref=e12]: admin123
+    - button "進入系統" [ref=e13] [cursor=pointer]
+  - generic [ref=e14]: © 2026 Voyage Shipping Accounting

@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+
+{% block title %}系統稽核與操作紀錄{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="header-container">
+        <h2>📜 系統操作紀錄 (Audit Log)</h2>
+    </div>
+
+    <!-- 篩選列可未來擴充 -->
+
+    <table id="auditTable" class="display" style="width:100%">
+        <thead>
+            <tr>
+                <th>編號</th>
+                <th>操作時間</th>
+                <th>使用者</th>
+                <th>來源 IP</th>
+                <th>動作類型</th>
+                <th>關聯表</th>
+                <th>資料 ID</th>
+                <th>異動內容詳情</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for log in logs %}
+            <tr>
+                <td>{{ log.id }}</td>
+                <td>{{ log.timestamp.strftime('%Y-%m-%d %H:%M:%S') if log.timestamp else '' }}</td>
+                <td style="font-weight: bold; color: {{ '#3366cc' if log.user_id else '#ff6600' }};">
+                    {{ user_map.get(log.user_id, "未知") }}
+                </td>
+                <td>{{ log.ip_address or 'System' }}</td>
+                <td>
+                    {% if log.action == 'CREATE' %}
+                        <span class="badge" style="background-color: #28a745;">{{ log.action }}</span>
+                    {% elif log.action == 'UPDATE' %}
+                        <span class="badge" style="background-color: #ffc107; color: #000;">{{ log.action }}</span>
+                    {% elif log.action == 'DELETE' %}
+                        <span class="badge" style="background-color: #dc3545;">{{ log.action }}</span>
+                    {% elif log.action == 'LOGIN' or log.action == 'LOGOUT' %}
+                        <span class="badge" style="background-color: #17a2b8;">{{ log.action }}</span>
+                    {% elif log.action == 'SEND_EMAIL' %}
+                        <span class="badge" style="background-color: #6f42c1;">{{ log.action }}</span>
+                    {% else %}
+                        <span class="badge" style="background-color: #6c757d;">{{ log.action }}</span>
+                    {% endif %}
+                </td>
+                <td>{{ log.table_name or '-' }}</td>
+                <td>{{ log.target_id or '-' }}</td>
+                <td>
+                    {% if log.old_value or log.new_value %}
+                        <button class="btn btn-sm btn-outline" onclick="showDiff('{{ log.id }}')">檢視</button>
+                        <div id="diff-{{ log.id }}" style="display:none;">
+                            <strong>操作前 (Old):</strong><br>
+                            <pre style="background:#f8f9fa; padding:5px; font-size:12px;">{{ log.old_value or 'N/A' }}</pre>
+                            <strong>操作後 (New):</strong><br>
+                            <pre style="background:#f8f9fa; padding:5px; font-size:12px;">{{ log.new_value or 'N/A' }}</pre>
+                        </div>
+                    {% else %}
+                        <span style="color: #999;">無</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- 彈出式 Modal (SweetAlert 或原生的 Modal) 這裡用原生簡單實現 -->
+<div id="diffModal" class="modal" style="display:none;">
+    <div class="modal-content" style="max-width: 800px;">
+        <span class="close" onclick="closeModal()">&times;</span>
+        <h3>變更內容對比</h3>
+        <div id="diffModalBody"></div>
+    </div>
+</div>
+
+<style>
+    .badge {
+        padding: 3px 8px;
+        color: white;
+        border-radius: 4px;
+        font-size: 0.8em;
+    }
+    .btn-sm {
+        padding: 2px 8px;
+        font-size: 0.85em;
+    }
+    .modal {
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0,0,0,0.5);
+    }
+    .modal-content {
+        background-color: #fefefe;
+        margin: 5% auto;
+        padding: 20px;
+        border: 1px solid #888;
+        width: 80%;
+        border-radius: 8px;
+    }
+    .close {
+        color: #aaa;
+        float: right;
+        font-size: 28px;
+        font-weight: bold;
+        cursor: pointer;
+    }
+</style>
+
+<script>
+    $(document).ready(function() {
+        // DataTables 初始化 (繁體中文)
+        $('#auditTable').DataTable({
+            "language": {
+                "url": "https://cdn.datatables.net/plug-ins/1.13.7/i18n/zh-HANT.json"
+            },
+            "order": [[ 0, "desc" ]], // 預設依據 ID 降冪排序（最新在前）
+            "pageLength": 50
+        });
+    });
+
+    function showDiff(logId) {
+        var content = document.getElementById('diff-' + logId).innerHTML;
+        document.getElementById('diffModalBody').innerHTML = content;
+        document.getElementById('diffModal').style.display = 'block';
+    }
+
+    function closeModal() {
+        document.getElementById('diffModal').style.display = 'none';
+    }
+
+    // 點擊 Modal 外部關閉
+    window.onclick = function(event) {
+        var modal = document.getElementById('diffModal');
+        if (event.target == modal) {
+            modal.style.display = "none";
+        }
+    }
+</script>
+{% endblock %}

@@ -77,6 +77,16 @@ def check_overdue_invoices():
             if success:
                 inv.is_reminded = 1
                 inv.last_reminded_at = datetime.now()
+                from utils.audit_logger import log_action
+                log_action(
+                    db, 
+                    action="SEND_EMAIL", 
+                    table_name="invoices", 
+                    target_id=str(inv.id),
+                    new_value={"is_reminded": 1, "last_reminded_at": str(inv.last_reminded_at)},
+                    user_id=None, # System Background task
+                    ip_address="system"
+                )
                 print(f"已成功寄送提醒信：{inv.invoice_no}")
             
         db.commit()

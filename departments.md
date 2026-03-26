@@ -1,0 +1,67 @@
+- generic [active] [ref=e1]:
+  - navigation [ref=e2]:
+    - generic [ref=e3]: ⚓ 船務部帳務系統
+    - list [ref=e4]:
+      - listitem [ref=e5]:
+        - link "帳務管理" [ref=e6] [cursor=pointer]:
+          - /url: /invoices
+      - listitem [ref=e7]:
+        - link "進出港" [ref=e8] [cursor=pointer]:
+          - /url: /voyage-tasks
+      - listitem [ref=e9]:
+        - link "🔔 提醒中心" [ref=e10] [cursor=pointer]:
+          - /url: /reminders
+      - listitem [ref=e11]:
+        - link "⚙️ 系統維護 ▾" [ref=e12] [cursor=pointer]:
+          - /url: javascript:void(0)
+      - listitem [ref=e13]:
+        - generic [ref=e14]: 👤 系統管理員 (Admin)
+        - link "登出" [ref=e15] [cursor=pointer]:
+          - /url: /auth/logout
+  - generic [ref=e16]:
+    - generic [ref=e17]:
+      - heading "部門管理" [level=1] [ref=e18]: 部門管理
+      - button "+ 新增部門" [ref=e19] [cursor=pointer]
+    - table [ref=e21]:
+      - rowgroup [ref=e22]:
+        - row "ID 部門名稱 描述 操作" [ref=e23]:
+          - columnheader "ID" [ref=e24]
+          - columnheader "部門名稱" [ref=e25]
+          - columnheader "描述" [ref=e26]
+          - columnheader "操作" [ref=e27]
+      - rowgroup [ref=e28]:
+        - row "1 資訊部 系統維護與管理 編輯 刪除" [ref=e29]:
+          - cell "1" [ref=e30]
+          - cell "資訊部" [ref=e31]
+          - cell "系統維護與管理" [ref=e32]
+          - cell "編輯 刪除" [ref=e33]:
+            - button "編輯" [ref=e34] [cursor=pointer]: 編輯
+            - button "刪除" [ref=e35] [cursor=pointer]: 刪除
+        - row "2 會計部 帳務與發票管理 編輯 刪除" [ref=e36]:
+          - cell "2" [ref=e37]
+          - cell "會計部" [ref=e38]
+          - cell "帳務與發票管理" [ref=e39]
+          - cell "編輯 刪除" [ref=e40]:
+            - button "編輯" [ref=e41] [cursor=pointer]: 編輯
+            - button "刪除" [ref=e42] [cursor=pointer]: 刪除
+        - row "3 航務部 現場作業與調度 編輯 刪除" [ref=e43]:
+          - cell "3" [ref=e44]
+          - cell "航務部" [ref=e45]
+          - cell "現場作業與調度" [ref=e46]
+          - cell "編輯 刪除" [ref=e47]:
+            - button "編輯" [ref=e48] [cursor=pointer]: 編輯
+            - button "刪除" [ref=e49] [cursor=pointer]: 刪除
+        - row "4 船務部 船務工作 編輯 刪除" [ref=e50]:
+          - cell "4" [ref=e51]
+          - cell "船務部" [ref=e52]
+          - cell "船務工作" [ref=e53]
+          - cell "編輯 刪除" [ref=e54]:
+            - button "編輯" [ref=e55] [cursor=pointer]: 編輯
+            - button "刪除" [ref=e56] [cursor=pointer]: 刪除
+        - row "5 TestDept_AuditLogs_123 updated 編輯 刪除" [ref=e57]:
+          - cell "5" [ref=e58]
+          - cell "TestDept_AuditLogs_123" [ref=e59]
+          - cell "updated" [ref=e60]
+          - cell "編輯 刪除" [ref=e61]:
+            - button "編輯" [ref=e62] [cursor=pointer]: 編輯
+            - button "刪除" [ref=e63] [cursor=pointer]: 刪除

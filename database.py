@@ -24,9 +24,13 @@ Base = declarative_base()
 
 
 
+from utils.audit_logger import register_audit_events
+register_audit_events(engine)
+
 def get_db():
     db = SessionLocal()
     try:
         yield db
     finally:
         db.close()
+

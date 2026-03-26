@@ -26,3 +26,5 @@
     at <anonymous> (http://localhost:8000/voyage-tasks/3:216:32)
     at e (https://code.jquery.com/jquery-3.7.1.min.js:1:27027)
     at t (https://code.jquery.com/jquery-3.7.1.min.js:1:27329)
+[ 6990944ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:8000/invoices/3/lines:0
+[ 7004354ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:8000/invoices/3/lines/11/edit:0

@@ -9,7 +9,7 @@ from jose import jwt, JWTError
 from sqlalchemy.orm import joinedload
 import models
 from database import engine, SessionLocal
-from routers import auth, ships, voyages, charge_items, invoices, invoice_lines, customers, voyage_tasks, task_categories, departments, employees, reminders
+from routers import auth, ships, voyages, charge_items, invoices, invoice_lines, customers, voyage_tasks, task_categories, departments, employees, reminders, audit_logs
 from apscheduler.schedulers.background import BackgroundScheduler
 from tasks.invoice_reminders import check_overdue_invoices
 from tasks.backup_tasks import backup_sqlite_db
@@ -56,10 +56,13 @@ def start_scheduler():
 SECRET_KEY = os.getenv("SECRET_KEY")
 ALGORITHM = os.getenv("ALGORITHM", "HS256")
 
+from utils.audit_logger import set_audit_context
+
 @app.middleware("http")
 async def add_user_to_request(request: Request, call_next):
     token = request.cookies.get("access_token")
     request.state.user = None
+    user_id = None
     if token:
         try:
             payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
@@ -73,9 +76,14 @@ async def add_user_to_request(request: Request, call_next):
                 ).filter(models.Employee.username == username).first()
                 if user and user.is_active:
                     request.state.user = user
+                    user_id = user.id
                 db.close()
         except (JWTError, Exception):
             pass
+            
+    client_ip = request.client.host if request.client else None
+    set_audit_context(user_id=user_id, ip_address=client_ip)
+    
     response = await call_next(request)
     return response
 
@@ -96,6 +104,7 @@ app.include_router(task_categories.router, dependencies=[Depends(get_current_use
 app.include_router(departments.router, dependencies=[Depends(get_current_user)])
 app.include_router(employees.router, dependencies=[Depends(get_current_user)])
 app.include_router(reminders.router, dependencies=[Depends(get_current_user)])
+app.include_router(audit_logs.router, dependencies=[Depends(get_current_user)])
 
 
 @app.get("/login")

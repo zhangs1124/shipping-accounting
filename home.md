@@ -1,0 +1,123 @@
+- generic [active] [ref=e1]:
+  - navigation [ref=e2]:
+    - generic [ref=e3]: ⚓ 船務部帳務系統
+    - list [ref=e4]:
+      - listitem [ref=e5]:
+        - link "帳務管理" [ref=e6] [cursor=pointer]:
+          - /url: /invoices
+      - listitem [ref=e7]:
+        - link "進出港" [ref=e8] [cursor=pointer]:
+          - /url: /voyage-tasks
+      - listitem [ref=e9]:
+        - link "🔔 提醒中心" [ref=e10] [cursor=pointer]:
+          - /url: /reminders
+      - listitem [ref=e11]:
+        - link "⚙️ 系統維護 ▾" [ref=e12] [cursor=pointer]:
+          - /url: javascript:void(0)
+      - listitem [ref=e13]:
+        - generic [ref=e14]: 👤 系統管理員 (Admin)
+        - link "登出" [ref=e15] [cursor=pointer]:
+          - /url: /auth/logout
+  - generic [ref=e16]:
+    - generic [ref=e17]:
+      - heading "📋 帳務管理" [level=1] [ref=e18]
+      - generic [ref=e19]:
+        - link "＋ 新增帳單" [ref=e20] [cursor=pointer]:
+          - /url: /invoices/new
+        - link "⬇ 匯出 Excel" [ref=e21] [cursor=pointer]:
+          - /url: /invoices/report/export-excel?voyage_id=&status=&date_from=&date_to=
+        - link "🖨 列印報表" [ref=e22] [cursor=pointer]:
+          - /url: /invoices/report/print?voyage_id=&status=&date_from=&date_to=
+    - generic [ref=e24]:
+      - generic [ref=e25]:
+        - generic [ref=e26]: 航次
+        - combobox [ref=e27]:
+          - option "全部航次" [selected]
+          - option "CS-2024-012"
+          - option "EG-2024-001"
+          - option "WH-2024-033"
+          - option "YM-2025-001"
+      - generic [ref=e28]:
+        - generic [ref=e29]: 狀態
+        - combobox [ref=e30]:
+          - option "全部狀態" [selected]
+          - option "草稿"
+          - option "已開立"
+          - option "已收款"
+      - generic [ref=e31]:
+        - generic [ref=e32]: 帳單日期（起）
+        - textbox [ref=e33]
+      - generic [ref=e34]:
+        - generic [ref=e35]: 帳單日期（迄）
+        - textbox [ref=e36]
+      - generic [ref=e37]:
+        - button "篩選" [ref=e38] [cursor=pointer]
+        - link "清除" [ref=e39] [cursor=pointer]:
+          - /url: /invoices
+    - generic [ref=e41]:
+      - generic [ref=e43]:
+        - text: 每頁顯示
+        - combobox "每頁顯示 筆" [ref=e44]:
+          - option "10"
+          - option "25" [selected]
+          - option "50"
+          - option "100"
+        - text: 筆
+      - generic [ref=e46]:
+        - text: 快速搜尋：
+        - searchbox "快速搜尋：" [ref=e47]
+      - table [ref=e48]:
+        - rowgroup [ref=e49]:
+          - 'row "帳單編號: activate to sort column ascending 航次: activate to sort column ascending 客戶名稱: activate to sort column ascending 帳單日期: activate to sort column ascending 總金額: activate to sort column ascending 狀態: activate to sort column ascending 操作: activate to sort column ascending" [ref=e50]':
+            - 'columnheader "帳單編號: activate to sort column ascending" [ref=e51] [cursor=pointer]': 帳單編號
+            - 'columnheader "航次: activate to sort column ascending" [ref=e52] [cursor=pointer]': 航次
+            - 'columnheader "客戶名稱: activate to sort column ascending" [ref=e53] [cursor=pointer]': 客戶名稱
+            - 'columnheader "帳單日期: activate to sort column ascending" [ref=e54] [cursor=pointer]': 帳單日期
+            - 'columnheader "總金額: activate to sort column ascending" [ref=e55] [cursor=pointer]': 總金額
+            - 'columnheader "狀態: activate to sort column ascending" [ref=e56] [cursor=pointer]': 狀態
+            - 'columnheader "操作: activate to sort column ascending" [ref=e57] [cursor=pointer]': 操作
+        - rowgroup [ref=e58]:
+          - row "INV-2024-003 WH-2024-033 萬海航運股份有限公司 2024-09-28 42,500.00 草稿 開啟 套用" [ref=e59]:
+            - cell "INV-2024-003" [ref=e60]:
+              - strong [ref=e61]: INV-2024-003
+            - cell "WH-2024-033" [ref=e62]
+            - cell "萬海航運股份有限公司" [ref=e63]
+            - cell "2024-09-28" [ref=e64]
+            - cell "42,500.00" [ref=e65]
+            - cell "草稿" [ref=e66]:
+              - generic [ref=e67]: 草稿
+            - cell "開啟 套用" [ref=e68]:
+              - link "開啟" [ref=e69] [cursor=pointer]:
+                - /url: /invoices/3
+              - button "套用" [ref=e70] [cursor=pointer]
+          - row "INV-2024-002 CS-2024-012 中華海運代理有限公司 2024-06-20 29,500.00 已開立 開啟 套用" [ref=e71]:
+            - cell "INV-2024-002" [ref=e72]:
+              - strong [ref=e73]: INV-2024-002
+            - cell "CS-2024-012" [ref=e74]
+            - cell "中華海運代理有限公司" [ref=e75]
+            - cell "2024-06-20" [ref=e76]
+            - cell "29,500.00" [ref=e77]
+            - cell "已開立" [ref=e78]:
+              - generic [ref=e79]: 已開立
+            - cell "開啟 套用" [ref=e80]:
+              - link "開啟" [ref=e81] [cursor=pointer]:
+                - /url: /invoices/2
+              - button "套用" [ref=e82] [cursor=pointer]
+          - row "INV-2024-001 EG-2024-001 台灣貨運股份有限公司 2024-04-10 86,700.00 已收款 開啟 套用" [ref=e83]:
+            - cell "INV-2024-001" [ref=e84]:
+              - strong [ref=e85]: INV-2024-001
+            - cell "EG-2024-001" [ref=e86]
+            - cell "台灣貨運股份有限公司" [ref=e87]
+            - cell "2024-04-10" [ref=e88]
+            - cell "86,700.00" [ref=e89]
+            - cell "已收款" [ref=e90]:
+              - generic [ref=e91]: 已收款
+            - cell "開啟 套用" [ref=e92]:
+              - link "開啟" [ref=e93] [cursor=pointer]:
+                - /url: /invoices/1
+              - button "套用" [ref=e94] [cursor=pointer]
+      - status [ref=e95]: 顯示第 1 到 3 筆，共 3 筆
+      - generic [ref=e96]:
+        - link "上一頁" [disabled] [ref=e97]
+        - link "1" [ref=e99] [cursor=pointer]
+        - link "下一頁" [disabled] [ref=e100]

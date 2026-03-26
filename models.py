@@ -224,3 +224,18 @@ class Reminder(Base):
     updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
 
     target_employee = relationship("Employee")
+
+
+class AuditLog(Base):
+    __tablename__ = "audit_logs"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, nullable=True) # 執行操作的員工/管理員 ID，系統則為 Null
+    action = Column(String, nullable=False) # CREATE, UPDATE, DELETE, LOGIN, LOGOUT, SEND_EMAIL 等
+    table_name = Column(String, nullable=True) # 受影響的資料表名
+    target_id = Column(String, nullable=True) # 被異動物件的主鍵
+    old_value = Column(String, nullable=True) # 發生變更前的資料 (JSON format)
+    new_value = Column(String, nullable=True) # 發生變更後的資料 (JSON format)
+    timestamp = Column(DateTime, default=func.now())
+    ip_address = Column(String, nullable=True) # 來源 IP
+

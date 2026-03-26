@@ -12,6 +12,7 @@ from database import engine, SessionLocal
 from routers import auth, ships, voyages, charge_items, invoices, invoice_lines, customers, voyage_tasks, task_categories, departments, employees
 from apscheduler.schedulers.background import BackgroundScheduler
 from tasks.invoice_reminders import check_overdue_invoices
+from tasks.backup_tasks import backup_sqlite_db
 from utils.auth import get_current_user, check_permissions
 from utils.templates import templates
 
@@ -35,6 +36,11 @@ def start_scheduler():
     scheduler.add_job(check_overdue_invoices, 'cron', hour='*', minute=0, id="hourly_check")
     # 3. 測試用：每 2 分鐘檢查一次
     scheduler.add_job(check_overdue_invoices, 'interval', minutes=2, id="test_check")
+    
+    # 4. 資料庫循環備份：每小時整點 (時:00) 執行一次
+    scheduler.add_job(backup_sqlite_db, 'cron', hour='*', minute=0, id="database_backup")
+    # 5. 系統啟動時先做一次備份，確保檔案及權限正常
+    scheduler.add_job(backup_sqlite_db, 'date', run_date=datetime.now(), id="startup_backup")
     
     if not scheduler.running:
         scheduler.start()

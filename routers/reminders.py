@@ -110,7 +110,14 @@ def add_manual_reminder(
     # 決定發送對象：優先使用航次操作員，若無則為當前設定者
     target_emp_id = voyage.operator_id if voyage.operator_id else current_user.id
 
-    freq_label = "單次" if frequency == "ONCE" else "每次(每天)"
+    freq_map = {
+        "ONCE": "單次",
+        "DAILY": "每天",
+        "HOURLY": "每小時",
+        "MINUTELY": "每分鐘"
+    }
+    freq_label = freq_map.get(frequency, "自訂")
+    
     new_reminder = models.Reminder(
         title=f"自訂提醒 ({freq_label})：{voyage.voyage_no} - {category.name}",
         content=f"使用者 {current_user.full_name or current_user.username} 針對航次 {voyage.voyage_no} 的「{category.name}」設定了自訂關切排程，提醒時間到了！",

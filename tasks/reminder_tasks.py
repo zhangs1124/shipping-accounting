@@ -100,6 +100,16 @@ def generate_task_reminders():
                                     html_content=html_content,
                                     recipient=recp
                                 )
+                                from utils.audit_logger import log_action
+                                log_action(
+                                    db, 
+                                    action="SEND_EMAIL", 
+                                    table_name="reminders", 
+                                    target_id=str(new_reminder.id),
+                                    new_value={"recipient": recp, "title": new_reminder.title},
+                                    user_id=None,
+                                    ip_address="system"
+                                )
                             except Exception as email_err:
                                 print(f"寄送提醒信件失敗給 {recp}: {email_err}")
                             
@@ -137,6 +147,16 @@ def generate_task_reminders():
                         subject=reminder.title,
                         html_content=html_content,
                         recipient=recp
+                    )
+                    from utils.audit_logger import log_action
+                    log_action(
+                        db, 
+                        action="SEND_EMAIL", 
+                        table_name="reminders", 
+                        target_id=str(reminder.id),
+                        new_value={"recipient": recp, "title": reminder.title},
+                        user_id=None,
+                        ip_address="system"
                     )
                 except Exception as email_err:
                     print(f"寄送手動提醒信失敗給 {recp}: {email_err}")

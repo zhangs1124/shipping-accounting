@@ -109,6 +109,15 @@ def send_reminder_now(
                 html_content=html_content,
                 recipient=recp
             )
+            from utils.audit_logger import log_action
+            log_action(
+                db, 
+                action="SEND_EMAIL", 
+                table_name="reminders", 
+                target_id=str(reminder.id),
+                new_value={"recipient": recp, "title": reminder.title, "manual": True},
+                user_id=current_user.id
+            )
         except Exception as email_err:
             print(f"立即傳送失敗給 {recp}: {email_err}")
             

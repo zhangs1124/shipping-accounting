@@ -16,10 +16,12 @@ VOYAGE_STATUSES = ["計畫中", "進行中", "已完成"]
 def list_voyages(request: Request, db: Session = Depends(get_db)):
     voyages = db.query(models.Voyage).order_by(models.Voyage.voyage_no).all()
     ships = db.query(models.Ship).order_by(models.Ship.code).all()
+    employees = db.query(models.Employee).filter(models.Employee.is_active == 1).all()
     return templates.TemplateResponse("voyages/list.html", {
         "request": request,
         "voyages": voyages,
         "ships": ships,
+        "employees": employees,
         "statuses": VOYAGE_STATUSES,
     })
 
@@ -33,22 +35,25 @@ def create_voyage(
     port_of_discharge: str = Form(""),
     etd: Optional[str] = Form(None),
     eta: Optional[str] = Form(None),
+    operator_id: Optional[int] = Form(None),
     db: Session = Depends(get_db),
 ):
     existing = db.query(models.Voyage).filter(models.Voyage.voyage_no == voyage_no).first()
     if existing:
         voyages = db.query(models.Voyage).order_by(models.Voyage.voyage_no).all()
         ships = db.query(models.Ship).order_by(models.Ship.code).all()
+        employees = db.query(models.Employee).filter(models.Employee.is_active == 1).all()
         return templates.TemplateResponse("voyages/list.html", {
             "request": request,
             "voyages": voyages,
             "ships": ships,
+            "employees": employees,
             "statuses": VOYAGE_STATUSES,
             "error": f"航次編號 '{voyage_no}' 已存在",
             "form_data": {
                 "voyage_no": voyage_no, "ship_id": ship_id,
                 "port_of_loading": port_of_loading, "port_of_discharge": port_of_discharge,
-                "etd": etd, "eta": eta,
+                "etd": etd, "eta": eta, "operator_id": operator_id
             },
         }, status_code=409)
 
@@ -60,6 +65,7 @@ def create_voyage(
         port_of_discharge=port_of_discharge,
         etd=date.fromisoformat(etd) if etd else None,
         eta=date.fromisoformat(eta) if eta else None,
+        operator_id=operator_id,
         status="計畫中",
     )
     db.add(voyage)
@@ -73,10 +79,12 @@ def edit_voyage_form(voyage_id: int, request: Request, db: Session = Depends(get
     if not voyage:
         return RedirectResponse(url="/voyages", status_code=303)
     ships = db.query(models.Ship).order_by(models.Ship.code).all()
+    employees = db.query(models.Employee).filter(models.Employee.is_active == 1).all()
     return templates.TemplateResponse("voyages/edit.html", {
         "request": request,
         "voyage": voyage,
         "ships": ships,
+        "employees": employees,
         "statuses": VOYAGE_STATUSES,
     })
 
@@ -90,6 +98,7 @@ def update_voyage(
     etd: Optional[str] = Form(None),
     eta: Optional[str] = Form(None),
     status: str = Form(...),
+    operator_id: Optional[int] = Form(None),
     db: Session = Depends(get_db),
 ):
     voyage = db.query(models.Voyage).filter(models.Voyage.id == voyage_id).first()
@@ -103,6 +112,7 @@ def update_voyage(
     voyage.etd = date.fromisoformat(etd) if etd else None
     voyage.eta = date.fromisoformat(eta) if eta else None
     voyage.status = status
+    voyage.operator_id = operator_id
     db.commit()
     return RedirectResponse(url="/voyages", status_code=303)
 
@@ -143,6 +153,7 @@ def api_create_voyage(
     port_of_discharge: str = Form(""),
     etd: Optional[str] = Form(None),
     eta: Optional[str] = Form(None),
+    operator_id: Optional[int] = Form(None),
     db: Session = Depends(get_db),
 ):
     if db.query(models.Voyage).filter(models.Voyage.voyage_no == voyage_no).first():
@@ -153,6 +164,7 @@ def api_create_voyage(
         port_of_loading=port_of_loading, port_of_discharge=port_of_discharge,
         etd=date.fromisoformat(etd) if etd else None,
         eta=date.fromisoformat(eta) if eta else None,
+        operator_id=operator_id,
         status="計畫中",
     )
     db.add(voyage)
@@ -170,6 +182,7 @@ def api_update_voyage(
     etd: Optional[str] = Form(None),
     eta: Optional[str] = Form(None),
     status: str = Form(...),
+    operator_id: Optional[int] = Form(None),
     db: Session = Depends(get_db),
 ):
     voyage = db.query(models.Voyage).filter(models.Voyage.id == voyage_id).first()
@@ -182,6 +195,7 @@ def api_update_voyage(
     voyage.etd = date.fromisoformat(etd) if etd else None
     voyage.eta = date.fromisoformat(eta) if eta else None
     voyage.status = status
+    voyage.operator_id = operator_id
     db.commit()
     return JSONResponse(_voyage_json(voyage))
 

@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+
+{% block title %}提醒中心 - 船務部帳務系統{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>🔔 提醒中心</h1>
+    <div class="header-actions">
+        {% if is_admin %}
+        <form action="/reminders" method="get" class="filter-form">
+            <select name="filter_user" onchange="this.form.submit()">
+                <option value="">-- 全部人員 --</option>
+                {% for emp in employees %}
+                <option value="{{ emp.id }}" {% if filter_user|int == emp.id %}selected{% endif %}>
+                    {{ emp.full_name }} ({{ emp.username }})
+                </option>
+                {% endfor %}
+            </select>
+            <noscript><button type="submit">篩選</button></noscript>
+        </form>
+        {% endif %}
+    </div>
+</div>
+
+<div class="reminders-container">
+    {% if not reminders %}
+        <div class="empty-state">
+            <p>目前沒有未處理的提醒事項。☕</p>
+        </div>
+    {% else %}
+        <div class="card-list">
+            {% for r in reminders %}
+            <div class="card reminder-card category-{{ r.remind_type|lower }}">
+                <div class="card-header">
+                    <span class="badge {{ 'badge-danger' if r.remind_type == 'TASK_OVERDUE' else 'badge-warning' }}">
+                        {{ '逾期' if r.remind_type == 'TASK_OVERDUE' else '提醒' }}
+                    </span>
+                    <h3>{{ r.title }}</h3>
+                    <span class="timestamp">{{ r.created_at.strftime('%Y-%m-%d %H:%M') }}</span>
+                </div>
+                <div class="card-body">
+                    <p>{{ r.content }}</p>
+                    {% if r.deadline %}
+                    <p class="deadline"><strong>預計期限：</strong> {{ r.deadline.strftime('%Y-%m-%d %H:%M') }}</p>
+                    {% endif %}
+                    {% if is_admin and not filter_user %}
+                    <p class="assigned-to"><strong>負責人：</strong> {{ r.target_employee.full_name if r.target_employee else '系統' }}</p>
+                    {% endif %}
+                </div>
+                <div class="card-footer">
+                    {% if r.source_table == 'voyage_task_logs' %}
+                    <a href="/voyage-tasks/{{ r.source_id }}" class="btn btn-primary btn-sm">前往查看任務</a>
+                    {% endif %}
+                    
+                    <form action="/reminders/close/{{ r.id }}" method="post" style="display: inline;">
+                        <button type="submit" class="btn btn-success btn-sm">✅ 標記完成 / 結案</button>
+                    </form>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+</div>
+
+<style>
+    .reminders-container {
+        margin-top: 20px;
+    }
+    .reminder-card {
+        border-left: 5px solid #ccc;
+        margin-bottom: 20px;
+        background: #fff;
+        padding: 15px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        border-radius: 8px;
+    }
+    .category-task_overdue { border-left-color: #ff4757; }
+    .category-task_upcoming { border-left-color: #ffa502; }
+    
+    .card-header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 10px;
+    }
+    .card-header h3 { margin: 0; font-size: 1.2rem; flex-grow: 1; }
+    .timestamp { font-size: 0.85rem; color: #666; }
+    
+    .card-body { margin-bottom: 15px; color: #444; }
+    .deadline { color: #d63031; font-weight: bold; }
+    .assigned-to { font-size: 0.9rem; color: #2d3436; background: #dfe6e9; padding: 2px 8px; border-radius: 4px; display: inline-block; }
+    
+    .card-footer {
+        display: flex;
+        gap: 10px;
+        justify-content: flex-end;
+    }
+    
+    .badge {
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 0.75rem;
+        color: #fff;
+    }
+    .badge-danger { background-color: #ff4757; }
+    .badge-warning { background-color: #ffa502; }
+    
+    .filter-form select {
+        padding: 8px;
+        border-radius: 4px;
+        border: 1px solid #ddd;
+    }
+</style>
+{% endblock %}

@@ -13,7 +13,7 @@
         <thead>
             <tr>
                 <th>航次編號</th><th>船舶</th><th>出發港</th><th>目的港</th>
-                <th>預計出發</th><th>預計抵達</th><th class="text-center">狀態</th>
+                <th>預計出發</th><th>預計抵達</th><th>負責人</th><th class="text-center">狀態</th>
                 <th class="text-center">操作</th>
             </tr>
         </thead>
@@ -26,6 +26,7 @@
                 <td>{{ v.port_of_discharge or '-' }}</td>
                 <td>{{ v.etd.strftime('%Y-%m-%d') if v.etd else '-' }}</td>
                 <td>{{ v.eta.strftime('%Y-%m-%d') if v.eta else '-' }}</td>
+                <td>{{ v.operator.full_name if v.operator else '-' }}</td>
                 <td class="text-center">
                     {% if v.status == '計畫中' %}<span class="badge badge-planned">{{ v.status }}</span>
                     {% elif v.status == '進行中' %}<span class="badge badge-ongoing">{{ v.status }}</span>
@@ -37,7 +38,7 @@
                         '{{ v.port_of_loading or '' }}','{{ v.port_of_discharge or '' }}',
                         '{{ v.etd.strftime('%Y-%m-%d') if v.etd else '' }}',
                         '{{ v.eta.strftime('%Y-%m-%d') if v.eta else '' }}',
-                        '{{ v.status }}')">編輯</button>
+                        '{{ v.status }}', {{ v.operator_id or 'null' }})">編輯</button>
                     <button class="btn btn-danger btn-sm"
                         onclick="openDeleteModal({{ v.id }},'{{ v.voyage_no }}')">刪除</button>
                 </td>
@@ -86,6 +87,15 @@
                 <div class="form-group">
                     <label>預計抵達日期</label>
                     <input type="date" id="add_eta">
+                </div>
+                <div class="form-group">
+                    <label>負責人員 (輸入人員)</label>
+                    <select id="add_operator_id">
+                        <option value="">-- 未指定 --</option>
+                        {% for emp in employees %}
+                        <option value="{{ emp.id }}">{{ emp.full_name }} ({{ emp.username }})</option>
+                        {% endfor %}
+                    </select>
                 </div>
             </div>
             <div id="addError" class="alert alert-error" style="display:none;margin-top:12px;"></div>
@@ -143,6 +153,15 @@
                         {% endfor %}
                     </select>
                 </div>
+                <div class="form-group">
+                    <label>負責人員</label>
+                    <select id="edit_operator_id">
+                        <option value="">-- 未指定 --</option>
+                        {% for emp in employees %}
+                        <option value="{{ emp.id }}">{{ emp.full_name }} ({{ emp.username }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
             </div>
             <div id="editError" class="alert alert-error" style="display:none;margin-top:12px;"></div>
             <div class="form-actions">
@@ -172,6 +191,7 @@
 <script>
 // ship lookup for display
 const shipMap = { {% for s in ships %}"{{ s.id }}": "{{ s.code }} - {{ s.name }}", {% endfor %} };
+const empMap = { {% for e in employees %}"{{ e.id }}": "{{ e.full_name }}", {% endfor %} };
 const statusBadge = { '計畫中':'badge-planned','進行中':'badge-ongoing','已完成':'badge-done' };
 let deleteTargetId = null;
 
@@ -184,7 +204,7 @@ function closeModal(id) {
     });
 }
 
-function openEditModal(id, voyage_no, ship_id, pol, pod, etd, eta, status) {
+function openEditModal(id, voyage_no, ship_id, pol, pod, etd, eta, status, operator_id) {
     document.getElementById('edit_id').value = id;
     document.getElementById('edit_voyage_no').value = voyage_no;
     document.getElementById('edit_ship_id').value = ship_id;
@@ -193,6 +213,7 @@ function openEditModal(id, voyage_no, ship_id, pol, pod, etd, eta, status) {
     document.getElementById('edit_etd').value = etd;
     document.getElementById('edit_eta').value = eta;
     document.getElementById('edit_status').value = status;
+    document.getElementById('edit_operator_id').value = operator_id || '';
     openModal('editModal');
 }
 
@@ -212,6 +233,7 @@ document.getElementById('addForm').addEventListener('submit', async function(e) 
         port_of_discharge: document.getElementById('add_pod').value,
         etd: document.getElementById('add_etd').value,
         eta: document.getElementById('add_eta').value,
+        operator_id: document.getElementById('add_operator_id').value,
     });
     const res = await fetch('/voyages/api', { method: 'POST', body });
     const data = await res.json();
@@ -236,6 +258,7 @@ document.getElementById('editForm').addEventListener('submit', async function(e)
         etd: document.getElementById('edit_etd').value,
         eta: document.getElementById('edit_eta').value,
         status: document.getElementById('edit_status').value,
+        operator_id: document.getElementById('edit_operator_id').value,
     });
     const res = await fetch(`/voyages/api/${id}`, { method: 'POST', body });
     const data = await res.json();
@@ -274,8 +297,9 @@ function rowHtml(v) {
         <td>${v.etd || '-'}</td>
         <td>${v.eta || '-'}</td>
         <td class="text-center"><span class="badge ${badge}">${v.status}</span></td>
+        <td>${empMap[v.operator_id] || '-'}</td>
         <td class="text-center">
-            <button class="btn btn-warning btn-sm" onclick="openEditModal(${v.id},'${v.voyage_no}',${v.ship_id},'${v.port_of_loading||''}','${v.port_of_discharge||''}','${v.etd||''}','${v.eta||''}','${v.status}')">編輯</button>
+            <button class="btn btn-warning btn-sm" onclick="openEditModal(${v.id},'${v.voyage_no}',${v.ship_id},'${v.port_of_loading||''}','${v.port_of_discharge||''}','${v.etd||''}','${v.eta||''}','${v.status}',${v.operator_id||'null'})">編輯</button>
             <button class="btn btn-danger btn-sm" onclick="openDeleteModal(${v.id},'${v.voyage_no}')">刪除</button>
         </td>`;
 }

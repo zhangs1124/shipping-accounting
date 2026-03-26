@@ -87,10 +87,15 @@ class Voyage(Base):
     etd = Column(Date)
     eta = Column(Date)
     status = Column(String, default="計畫中")  # 計畫中/進行中/已完成
+    
+    # 提醒中心擴充
+    operator_id = Column(Integer, ForeignKey("employees.id"), nullable=True)
+    
     created_at = Column(DateTime, default=func.now())
     updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
 
     ship = relationship("Ship", back_populates="voyages")
+    operator = relationship("Employee")
     invoices = relationship("Invoice", back_populates="voyage")
     task_logs = relationship("VoyageTaskLog", back_populates="voyage")
 
@@ -104,6 +109,11 @@ class TaskCategory(Base):
     default_fee = Column(Numeric(18, 2), default=0) # 預設規費
     display_order = Column(Integer, default=0)
     is_active = Column(Integer, default=1)   # 1: 啟用, 0: 停用
+    
+    # 提醒中心擴充
+    base_milestone = Column(String, nullable=True) # e.g., 'ETA', 'ETD'
+    expected_offset_hours = Column(Integer, default=0) # 偏移小時 (正數代表之後，負數代表之前)
+    
     created_at = Column(DateTime, default=func.now())
     updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
 
@@ -190,3 +200,21 @@ class InvoiceLine(Base):
 
     invoice = relationship("Invoice", back_populates="lines")
     charge_item = relationship("ChargeItem", back_populates="invoice_lines")
+
+
+class Reminder(Base):
+    __tablename__ = "reminders"
+
+    id = Column(Integer, primary_key=True, index=True)
+    title = Column(String, nullable=False)
+    content = Column(String)
+    remind_type = Column(String, default="TASK_OVERDUE") # TASK_OVERDUE, TASK_UPCOMING, SYSTEM
+    source_table = Column(String) # e.g., 'voyage_task_logs'
+    source_id = Column(Integer)
+    target_employee_id = Column(Integer, ForeignKey("employees.id"), nullable=False)
+    is_closed = Column(Integer, default=0) # 0: 處理中, 1: 已完成
+    deadline = Column(DateTime)
+    created_at = Column(DateTime, default=func.now())
+    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
+
+    target_employee = relationship("Employee")

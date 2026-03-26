@@ -23,6 +23,8 @@ def api_create_category(
     task_group: str = Form(...),
     default_fee: Decimal = Form(0),
     display_order: int = Form(0),
+    base_milestone: Optional[str] = Form(None),
+    expected_offset_hours: int = Form(0),
     db: Session = Depends(get_db),
 ):
     """
@@ -33,6 +35,8 @@ def api_create_category(
         task_group=task_group,
         default_fee=default_fee,
         display_order=display_order,
+        base_milestone=base_milestone,
+        expected_offset_hours=expected_offset_hours,
         is_active=1
     )
     db.add(category)
@@ -44,6 +48,8 @@ def api_create_category(
         "task_group": category.task_group,
         "default_fee": float(category.default_fee),
         "display_order": category.display_order,
+        "base_milestone": category.base_milestone,
+        "expected_offset_hours": category.expected_offset_hours,
         "is_active": category.is_active
     })
 
@@ -55,6 +61,8 @@ def api_update_category(
     default_fee: Decimal = Form(0),
     display_order: int = Form(0),
     is_active: int = Form(1),
+    base_milestone: Optional[str] = Form(None),
+    expected_offset_hours: int = Form(0),
     db: Session = Depends(get_db),
 ):
     """
@@ -68,6 +76,8 @@ def api_update_category(
     category.default_fee = default_fee
     category.display_order = display_order
     category.is_active = is_active
+    category.base_milestone = base_milestone
+    category.expected_offset_hours = expected_offset_hours
     db.commit()
     return JSONResponse({
         "id": category.id,
@@ -75,6 +85,8 @@ def api_update_category(
         "task_group": category.task_group,
         "default_fee": float(category.default_fee),
         "display_order": category.display_order,
+        "base_milestone": category.base_milestone,
+        "expected_offset_hours": category.expected_offset_hours,
         "is_active": category.is_active
     })
 

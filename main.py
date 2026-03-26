@@ -9,7 +9,7 @@ from jose import jwt, JWTError
 from sqlalchemy.orm import joinedload
 import models
 from database import engine, SessionLocal
-from routers import auth, ships, voyages, charge_items, invoices, invoice_lines, customers, voyage_tasks, task_categories, departments, employees
+from routers import auth, ships, voyages, charge_items, invoices, invoice_lines, customers, voyage_tasks, task_categories, departments, employees, reminders
 from apscheduler.schedulers.background import BackgroundScheduler
 from tasks.invoice_reminders import check_overdue_invoices
 from tasks.backup_tasks import backup_sqlite_db
@@ -41,6 +41,12 @@ def start_scheduler():
     scheduler.add_job(backup_sqlite_db, 'cron', hour='*', minute=0, id="database_backup")
     # 5. 系統啟動時先做一次備份，確保檔案及權限正常
     scheduler.add_job(backup_sqlite_db, 'date', run_date=datetime.now(), id="startup_backup")
+    
+    # 每 15 分鐘執行一次提醒掃描
+    scheduler.add_job(generate_task_reminders, 'interval', minutes=15)
+    
+    # 啟動時也執行一次
+    scheduler.add_job(generate_task_reminders, 'date', run_date=datetime.now())
     
     if not scheduler.running:
         scheduler.start()
@@ -88,6 +94,7 @@ app.include_router(voyage_tasks.router, dependencies=[Depends(get_current_user)]
 app.include_router(task_categories.router, dependencies=[Depends(get_current_user)])
 app.include_router(departments.router, dependencies=[Depends(get_current_user)])
 app.include_router(employees.router, dependencies=[Depends(get_current_user)])
+app.include_router(reminders.router, dependencies=[Depends(get_current_user)])
 
 
 @app.get("/login")

@@ -15,6 +15,8 @@
                 <th>項目名稱</th>
                 <th>任務分組</th>
                 <th>預設規費</th>
+                <th>基準里程</th>
+                <th>偏移小時</th>
                 <th>顯示順序</th>
                 <th class="text-center">狀態</th>
                 <th class="text-center">操作</th>
@@ -26,6 +28,8 @@
                 <td><strong>{{ cat.name }}</strong></td>
                 <td><span class="badge badge-info">{{ cat.task_group or '-' }}</span></td>
                 <td>{{ "${:,.2f}".format(cat.default_fee) }}</td>
+                <td><span class="badge badge-secondary">{{ cat.base_milestone or '-' }}</span></td>
+                <td>{{ cat.expected_offset_hours or 0 }}</td>
                 <td>{{ cat.display_order }}</td>
                 <td class="text-center">
                     {% if cat.is_active %}
@@ -41,6 +45,8 @@
                         data-group="{{ cat.task_group or '' }}"
                         data-fee="{{ cat.default_fee }}" 
                         data-order="{{ cat.display_order }}" 
+                        data-milestone="{{ cat.base_milestone or '' }}"
+                        data-offset="{{ cat.expected_offset_hours or 0 }}"
                         data-active="{{ cat.is_active }}">編輯</button>
                     <button class="btn btn-danger btn-sm btn-delete-cat" 
                         data-id="{{ cat.id }}" 
@@ -86,6 +92,18 @@
                 <div class="form-group">
                     <label>顯示順序</label>
                     <input type="number" id="add_order" value="0">
+                </div>
+                <div class="form-group">
+                    <label>基準里程碑</label>
+                    <select id="add_milestone">
+                        <option value="">-- 無 --</option>
+                        <option value="ETA">ETA (預計抵達)</option>
+                        <option value="ETD">ETD (預計出發)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>偏移小時 (逾期判斷)</label>
+                    <input type="number" id="add_offset" value="0" placeholder="正數延後，負數提早">
                 </div>
             </div>
             <div id="addError" class="alert alert-error" style="display:none;margin-top:12px;"></div>
@@ -137,6 +155,18 @@
                         <option value="1">啟用</option>
                         <option value="0">停用</option>
                     </select>
+                </div>
+                <div class="form-group">
+                    <label>基準里程碑</label>
+                    <select id="edit_milestone">
+                        <option value="">-- 無 --</option>
+                        <option value="ETA">ETA (預計抵達)</option>
+                        <option value="ETD">ETD (預計出發)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>偏移小時</label>
+                    <input type="number" id="edit_offset">
                 </div>
             </div>
             <div id="editError" class="alert alert-error" style="display:none;margin-top:12px;"></div>
@@ -219,6 +249,8 @@ function getRowContent(cat) {
         <td><strong>${cat.name}</strong></td>
         <td><span class="badge ${groupColor}">${cat.task_group || '-'}</span></td>
         <td>${parseFloat(cat.default_fee).toLocaleString('zh-TW', {minimumFractionDigits:2})}</td>
+        <td><span class="badge badge-secondary">${cat.base_milestone || '-'}</span></td>
+        <td>${cat.expected_offset_hours || 0}</td>
         <td>${cat.display_order}</td>
         <td class="text-center">
             ${cat.is_active ? '<span class="badge badge-done">啟用中</span>' : '<span class="badge badge-draft">停用</span>'}
@@ -230,6 +262,8 @@ function getRowContent(cat) {
                 data-group="${cat.task_group || ''}"
                 data-fee="${cat.default_fee}" 
                 data-order="${cat.display_order}" 
+                data-milestone="${cat.base_milestone || ''}"
+                data-offset="${cat.expected_offset_hours || 0}"
                 data-active="${cat.is_active}">編輯</button>
             <button class="btn btn-danger btn-sm btn-delete-cat" 
                 data-id="${cat.id}" 
@@ -244,20 +278,22 @@ document.getElementById('categoryTableBody').addEventListener('click', function(
     
     if (btnEdit) {
         const d = btnEdit.dataset;
-        openEditModal(d.id, d.name, d.group, d.fee, d.order, d.active);
+        openEditModal(d.id, d.name, d.group, d.fee, d.order, d.active, d.milestone, d.offset);
     } else if (btnDelete) {
         const d = btnDelete.dataset;
         openDeleteModal(d.id, d.name);
     }
 });
 
-function openEditModal(id, name, group, fee, order, active) {
+function openEditModal(id, name, group, fee, order, active, milestone, offset) {
     document.getElementById('edit_id').value = id;
     document.getElementById('edit_name').value = name;
     document.getElementById('edit_group').value = group;
     document.getElementById('edit_fee').value = fee;
     document.getElementById('edit_order').value = order;
     document.getElementById('edit_active').value = active;
+    document.getElementById('edit_milestone').value = milestone || '';
+    document.getElementById('edit_offset').value = offset || 0;
     openModal('editModal');
 }
 
@@ -274,6 +310,8 @@ document.getElementById('addForm').addEventListener('submit', async function(e) 
         task_group: document.getElementById('add_group').value,
         default_fee: document.getElementById('add_fee').value,
         display_order: document.getElementById('add_order').value,
+        base_milestone: document.getElementById('add_milestone').value,
+        expected_offset_hours: document.getElementById('add_offset').value,
     });
     const res = await fetch('/task-categories/api', { method: 'POST', body });
     const data = await res.json();
@@ -298,6 +336,8 @@ document.getElementById('editForm').addEventListener('submit', async function(e)
         default_fee: document.getElementById('edit_fee').value,
         display_order: document.getElementById('edit_order').value,
         is_active: document.getElementById('edit_active').value,
+        base_milestone: document.getElementById('edit_milestone').value,
+        expected_offset_hours: document.getElementById('edit_offset').value,
     });
     const res = await fetch(`/task-categories/api/${id}`, { method: 'POST', body });
     const data = await res.json();

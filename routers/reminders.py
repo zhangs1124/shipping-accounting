@@ -70,6 +70,50 @@ def close_reminder(
     
     return RedirectResponse(url="/reminders", status_code=303)
 
+@router.post("/send/{reminder_id}")
+def send_reminder_now(
+    reminder_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.Employee = Depends(get_current_user)
+):
+    """手動立即觸發提醒信件"""
+    from utils.mailer import send_email
+    reminder = db.query(models.Reminder).filter(models.Reminder.id == reminder_id).first()
+    if not reminder:
+        return JSONResponse({"error": "提醒不存在"}, status_code=404)
+        
+    is_admin = current_user.role and current_user.role.name == "Admin"
+    if not is_admin and reminder.target_employee_id != current_user.id:
+        return JSONResponse({"error": "權限不足"}, status_code=403)
+
+    recipients = {"zhangj1124@gmail.com"}
+    if reminder.target_employee and reminder.target_employee.email:
+        recipients.add(reminder.target_employee.email)
+        
+    for recp in recipients:
+        try:
+            html_content = f"""
+            <html>
+            <body>
+                <h2>中央提醒中心 - 手動立即傳送</h2>
+                <p><strong>標題：</strong> {reminder.title}</p>
+                <p><strong>內容：</strong> {reminder.content}</p>
+                <p><strong>負責人員 ID：</strong> {reminder.target_employee_id}</p>
+                <hr>
+                <p>此任務尚未完成，此為手動觸發的提醒信件。</p>
+            </body>
+            </html>
+            """
+            send_email(
+                subject=f"[立即傳送] {reminder.title}",
+                html_content=html_content,
+                recipient=recp
+            )
+        except Exception as email_err:
+            print(f"立即傳送失敗給 {recp}: {email_err}")
+            
+    return RedirectResponse(url="/reminders", status_code=303)
+
 @router.get("/api/unread-count")
 def get_unread_count(
     db: Session = Depends(get_db),

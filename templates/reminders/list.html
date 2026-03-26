@@ -40,7 +40,9 @@
                 </div>
                 <div class="card-body">
                     <p>{{ r.content }}</p>
-                    {% if r.deadline %}
+                    {% if r.remind_type == 'MANUAL_TASK' and r.next_remind_at %}
+                    <p class="deadline"><strong>下次傳送時間：</strong> {{ r.next_remind_at.strftime('%Y-%m-%d %H:%M') }}</p>
+                    {% elif r.deadline %}
                     <p class="deadline"><strong>預計期限：</strong> {{ r.deadline.strftime('%Y-%m-%d %H:%M') }}</p>
                     {% endif %}
                     {% if is_admin and not filter_user %}
@@ -52,6 +54,9 @@
                     <a href="/voyage-tasks/{{ r.source_id }}" class="btn btn-primary btn-sm">前往查看任務</a>
                     {% endif %}
                     
+                    <form action="/reminders/send/{{ r.id }}" method="post" style="display: inline;">
+                        <button type="submit" class="btn btn-warning btn-sm" onclick="return confirm('確定要立即傳送此提醒信件嗎？');">📩 立即傳送</button>
+                    </form>
                     <form action="/reminders/close/{{ r.id }}" method="post" style="display: inline;">
                         <button type="submit" class="btn btn-success btn-sm">✅ 標記完成 / 結案</button>
                     </form>

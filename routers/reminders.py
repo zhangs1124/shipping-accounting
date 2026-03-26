@@ -121,6 +121,7 @@ def send_reminder_now(
         except Exception as email_err:
             print(f"立即傳送失敗給 {recp}: {email_err}")
             
+    db.commit()
     return RedirectResponse(url="/reminders", status_code=303)
 
 @router.get("/api/unread-count")

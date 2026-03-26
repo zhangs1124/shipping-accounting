@@ -91,8 +91,8 @@ def generate_task_reminders():
                             """
                             send_email(
                                 subject=new_reminder.title,
-                                body=html_content,
-                                to_email="zhangj1124@gmail.com"
+                                html_content=html_content,
+                                recipient="zhangj1124@gmail.com"
                             )
                         except Exception as email_err:
                             print(f"寄送提醒信件失敗: {email_err}")
@@ -124,8 +124,8 @@ def generate_task_reminders():
                 """
                 send_email(
                     subject=reminder.title,
-                    body=html_content,
-                    to_email="zhangj1124@gmail.com"
+                    html_content=html_content,
+                    recipient="zhangj1124@gmail.com"
                 )
             except Exception as email_err:
                 print(f"寄送手動提醒信失敗: {email_err}")

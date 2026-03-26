@@ -53,7 +53,7 @@ def check_and_send_reminders():
         # 逾期標準：7 天前
         seven_days_ago = date.today() - timedelta(days=7)
         # 重複提醒標準：2 天前
-        three_days_ago = datetime.now() - timedelta(days=2)
+        three_days_ago = datetime.now() - timedelta(days=1)
 
         overdue_invoices = (
             db.query(models.Invoice)

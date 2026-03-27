@@ -8,7 +8,7 @@ from datetime import datetime
 current_user_id: ContextVar[int] = ContextVar("current_user_id", default=None)
 current_ip_address: ContextVar[str] = ContextVar("current_ip_address", default=None)
 # To prevent infinite loops or logging unwanted models
-AUDIT_EXCLUDE_TABLES = {"audit_logs", "reminders", "voyage_task_logs"}
+AUDIT_EXCLUDE_TABLES = {"audit_logs"}
 
 def set_audit_context(user_id: int = None, ip_address: str = None):
     current_user_id.set(user_id)

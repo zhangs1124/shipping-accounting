@@ -28,7 +28,7 @@
             <tr>
                 <td>{{ log.id }}</td>
                 <td>{{ log.timestamp.strftime('%Y-%m-%d %H:%M:%S') if log.timestamp else '' }}</td>
-                <td style="font-weight: bold; color: {{ '#3366cc' if log.user_id else '#ff6600' }};">
+                <td class="user-cell {{ 'user-admin' if log.user_id else 'user-unknown' }}">
                     {{ user_map.get(log.user_id, "未知") }}
                 </td>
                 <td>{{ log.ip_address or 'System' }}</td>
@@ -52,11 +52,9 @@
                 <td>
                     {% if log.old_value or log.new_value %}
                         <button class="btn btn-sm btn-outline" onclick="showDiff('{{ log.id }}')">檢視</button>
-                        <div id="diff-{{ log.id }}" style="display:none;">
-                            <strong>操作前 (Old):</strong><br>
-                            <pre style="background:#f8f9fa; padding:5px; font-size:12px;">{{ log.old_value or 'N/A' }}</pre>
-                            <strong>操作後 (New):</strong><br>
-                            <pre style="background:#f8f9fa; padding:5px; font-size:12px;">{{ log.new_value or 'N/A' }}</pre>
+                        <div style="display:none;">
+                            <div id="old-{{ log.id }}">{{ log.old_value or 'N/A' }}</div>
+                            <div id="new-{{ log.id }}">{{ log.new_value or 'N/A' }}</div>
                         </div>
                     {% else %}
                         <span style="color: #999;">無</span>
@@ -68,12 +66,17 @@
     </table>
 </div>
 
-<!-- 彈出式 Modal (SweetAlert 或原生的 Modal) 這裡用原生簡單實現 -->
-<div id="diffModal" class="modal" style="display:none;">
-    <div class="modal-content" style="max-width: 800px;">
-        <span class="close" onclick="closeModal()">&times;</span>
-        <h3>變更內容對比</h3>
-        <div id="diffModalBody"></div>
+<!-- 彈出式 Modal -->
+<div id="diffModal" class="modal-overlay">
+    <div class="modal" style="max-width: 800px;">
+        <div class="modal-header">
+            <h2>變更內容對比</h2>
+            <button class="modal-close" onclick="closeModal()">✕</button>
+        </div>
+        <div id="diffModalBody" style="margin-top: 15px;"></div>
+        <div class="form-actions" style="justify-content: flex-end; margin-top: 20px;">
+            <button class="btn btn-secondary" onclick="closeModal()">關閉</button>
+        </div>
     </div>
 </div>
 
@@ -88,29 +91,23 @@
         padding: 2px 8px;
         font-size: 0.85em;
     }
-    .modal {
-        position: fixed;
-        z-index: 1000;
-        left: 0;
-        top: 0;
-        width: 100%;
-        height: 100%;
-        background-color: rgba(0,0,0,0.5);
-    }
-    .modal-content {
-        background-color: #fefefe;
-        margin: 5% auto;
-        padding: 20px;
-        border: 1px solid #888;
-        width: 80%;
-        border-radius: 8px;
-    }
-    .close {
-        color: #aaa;
-        float: right;
-        font-size: 28px;
+    .user-cell {
         font-weight: bold;
-        cursor: pointer;
+    }
+    .user-admin {
+        color: #3366cc;
+    }
+    .user-unknown {
+        color: #ff6600;
+    }
+    .user-cell {
+        font-weight: bold;
+    }
+    .user-admin {
+        color: #3366cc;
+    }
+    .user-unknown {
+        color: #ff6600;
     }
 </style>
 
@@ -127,20 +124,47 @@
     });
 
     function showDiff(logId) {
-        var content = document.getElementById('diff-' + logId).innerHTML;
-        document.getElementById('diffModalBody').innerHTML = content;
-        document.getElementById('diffModal').style.display = 'block';
+        var oldVal = document.getElementById('old-' + logId).textContent.trim();
+        var newVal = document.getElementById('new-' + logId).textContent.trim();
+        
+        function formatVal(val) {
+            if (!val || val === 'N/A') return '<pre style="color:#999;">N/A</pre>';
+            try {
+                // 嘗試解析 JSON 並美化
+                var obj = JSON.parse(val);
+                return '<pre style="background:#f8f9fa; padding:12px; border-radius:4px; font-size:13px; border:1px solid #ddd; overflow:auto;">' + 
+                       JSON.stringify(obj, null, 4) + '</pre>';
+            } catch (e) {
+                // 如果不是 JSON，直接顯示
+                return '<pre style="background:#f8f9fa; padding:12px; border-radius:4px; font-size:13px; border:1px solid #ddd; overflow:auto;">' + 
+                       val + '</pre>';
+            }
+        }
+
+        var html = `
+            <div style="margin-bottom:20px;">
+                <strong style="color:#1a3a5c; display:block; margin-bottom:8px;">🔹 操作前 (Old Value):</strong>
+                ${formatVal(oldVal)}
+            </div>
+            <div>
+                <strong style="color:#28a745; display:block; margin-bottom:8px;">🔸 操作後 (New Value):</strong>
+                ${formatVal(newVal)}
+            </div>
+        `;
+        
+        document.getElementById('diffModalBody').innerHTML = html;
+        document.getElementById('diffModal').classList.add('active');
     }
 
     function closeModal() {
-        document.getElementById('diffModal').style.display = 'none';
+        document.getElementById('diffModal').classList.remove('active');
     }
 
-    // 點擊 Modal 外部關閉
+    // 點擊 Modal 外部（背景）關閉
     window.onclick = function(event) {
         var modal = document.getElementById('diffModal');
         if (event.target == modal) {
-            modal.style.display = "none";
+            modal.classList.remove('active');
         }
     }
 </script>

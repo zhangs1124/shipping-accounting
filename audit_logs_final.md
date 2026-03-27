@@ -1,0 +1,263 @@
+- generic [active] [ref=e1]:
+  - navigation [ref=e2]:
+    - generic [ref=e3]: ⚓ 船務部帳務系統
+    - list [ref=e4]:
+      - listitem [ref=e5]:
+        - link "帳務管理" [ref=e6] [cursor=pointer]:
+          - /url: /invoices
+      - listitem [ref=e7]:
+        - link "進出港" [ref=e8] [cursor=pointer]:
+          - /url: /voyage-tasks
+      - listitem [ref=e9]:
+        - link "🔔 提醒中心" [ref=e10] [cursor=pointer]:
+          - /url: /reminders
+      - listitem [ref=e11]:
+        - link "⚙️ 系統維護 ▾" [ref=e12] [cursor=pointer]:
+          - /url: javascript:void(0)
+      - listitem [ref=e13]:
+        - generic [ref=e14]: 👤 系統管理員 (Admin)
+        - link "登出" [ref=e15] [cursor=pointer]:
+          - /url: /auth/logout
+  - generic [ref=e17]:
+    - heading "📜 系統操作紀錄 (Audit Log)" [level=2] [ref=e19]
+    - generic [ref=e20]:
+      - generic [ref=e22]:
+        - text: 顯示
+        - combobox "顯示 筆結果" [ref=e23]:
+          - option "10"
+          - option "25"
+          - option "50" [selected]
+          - option "100"
+        - text: 筆結果
+      - generic [ref=e25]:
+        - text: 搜尋：
+        - searchbox "搜尋：" [ref=e26]
+      - table [ref=e27]:
+        - rowgroup [ref=e28]:
+          - row "編號：升冪排列 操作時間：升冪排列 使用者：升冪排列 來源 IP：升冪排列 動作類型：升冪排列 關聯表：升冪排列 資料 ID：升冪排列 異動內容詳情：升冪排列" [ref=e29]:
+            - columnheader "編號：升冪排列" [ref=e30] [cursor=pointer]: 編號
+            - columnheader "操作時間：升冪排列" [ref=e31] [cursor=pointer]: 操作時間
+            - columnheader "使用者：升冪排列" [ref=e32] [cursor=pointer]: 使用者
+            - columnheader "來源 IP：升冪排列" [ref=e33] [cursor=pointer]: 來源 IP
+            - columnheader "動作類型：升冪排列" [ref=e34] [cursor=pointer]: 動作類型
+            - columnheader "關聯表：升冪排列" [ref=e35] [cursor=pointer]: 關聯表
+            - columnheader "資料 ID：升冪排列" [ref=e36] [cursor=pointer]: 資料 ID
+            - columnheader "異動內容詳情：升冪排列" [ref=e37] [cursor=pointer]: 異動內容詳情
+        - rowgroup [ref=e38]:
+          - row "20 2026-03-26 14:04:46 系統管理員 127.0.0.1 SEND_EMAIL reminders 13 檢視" [ref=e39]:
+            - cell "20" [ref=e40]
+            - cell "2026-03-26 14:04:46" [ref=e41]
+            - cell "系統管理員" [ref=e42]
+            - cell "127.0.0.1" [ref=e43]
+            - cell "SEND_EMAIL" [ref=e44]:
+              - generic [ref=e45]: SEND_EMAIL
+            - cell "reminders" [ref=e46]
+            - cell "13" [ref=e47]
+            - cell "檢視" [ref=e48]:
+              - button "檢視" [ref=e49] [cursor=pointer]
+          - row "19 2026-03-26 14:04:44 系統管理員 127.0.0.1 SEND_EMAIL reminders 13 檢視" [ref=e50]:
+            - cell "19" [ref=e51]
+            - cell "2026-03-26 14:04:44" [ref=e52]
+            - cell "系統管理員" [ref=e53]
+            - cell "127.0.0.1" [ref=e54]
+            - cell "SEND_EMAIL" [ref=e55]:
+              - generic [ref=e56]: SEND_EMAIL
+            - cell "reminders" [ref=e57]
+            - cell "13" [ref=e58]
+            - cell "檢視" [ref=e59]:
+              - button "檢視" [ref=e60] [cursor=pointer]
+          - row "18 2026-03-26 05:56:03 系統管理員 127.0.0.1 UPDATE employees 2 檢視" [ref=e61]:
+            - cell "18" [ref=e62]
+            - cell "2026-03-26 05:56:03" [ref=e63]
+            - cell "系統管理員" [ref=e64]
+            - cell "127.0.0.1" [ref=e65]
+            - cell "UPDATE" [ref=e66]:
+              - generic [ref=e67]: UPDATE
+            - cell "employees" [ref=e68]
+            - cell "2" [ref=e69]
+            - cell "檢視" [ref=e70]:
+              - button "檢視" [ref=e71] [cursor=pointer]
+          - row "17 2026-03-26 13:55:50 系統管理員 127.0.0.1 LOGIN - - 無" [ref=e72]:
+            - cell "17" [ref=e73]
+            - cell "2026-03-26 13:55:50" [ref=e74]
+            - cell "系統管理員" [ref=e75]
+            - cell "127.0.0.1" [ref=e76]
+            - cell "LOGIN" [ref=e77]:
+              - generic [ref=e78]: LOGIN
+            - cell "-" [ref=e79]
+            - cell "-" [ref=e80]
+            - cell "無" [ref=e81]
+          - row "16 2026-03-26 13:55:48 測試員A 127.0.0.1 LOGOUT - - 無" [ref=e82]:
+            - cell "16" [ref=e83]
+            - cell "2026-03-26 13:55:48" [ref=e84]
+            - cell "測試員A" [ref=e85]
+            - cell "127.0.0.1" [ref=e86]
+            - cell "LOGOUT" [ref=e87]:
+              - generic [ref=e88]: LOGOUT
+            - cell "-" [ref=e89]
+            - cell "-" [ref=e90]
+            - cell "無" [ref=e91]
+          - row "15 2026-03-26 13:55:15 測試員A 127.0.0.1 LOGIN - - 無" [ref=e92]:
+            - cell "15" [ref=e93]
+            - cell "2026-03-26 13:55:15" [ref=e94]
+            - cell "測試員A" [ref=e95]
+            - cell "127.0.0.1" [ref=e96]
+            - cell "LOGIN" [ref=e97]:
+              - generic [ref=e98]: LOGIN
+            - cell "-" [ref=e99]
+            - cell "-" [ref=e100]
+            - cell "無" [ref=e101]
+          - row "14 2026-03-26 13:55:11 系統管理員 127.0.0.1 LOGOUT - - 無" [ref=e102]:
+            - cell "14" [ref=e103]
+            - cell "2026-03-26 13:55:11" [ref=e104]
+            - cell "系統管理員" [ref=e105]
+            - cell "127.0.0.1" [ref=e106]
+            - cell "LOGOUT" [ref=e107]:
+              - generic [ref=e108]: LOGOUT
+            - cell "-" [ref=e109]
+            - cell "-" [ref=e110]
+            - cell "無" [ref=e111]
+          - row "13 2026-03-26 05:55:07 系統管理員 127.0.0.1 UPDATE employees 2 檢視" [ref=e112]:
+            - cell "13" [ref=e113]
+            - cell "2026-03-26 05:55:07" [ref=e114]
+            - cell "系統管理員" [ref=e115]
+            - cell "127.0.0.1" [ref=e116]
+            - cell "UPDATE" [ref=e117]:
+              - generic [ref=e118]: UPDATE
+            - cell "employees" [ref=e119]
+            - cell "2" [ref=e120]
+            - cell "檢視" [ref=e121]:
+              - button "檢視" [ref=e122] [cursor=pointer]
+          - row "12 2026-03-26 05:43:52 系統管理員 127.0.0.1 UPDATE employees 1 檢視" [ref=e123]:
+            - cell "12" [ref=e124]
+            - cell "2026-03-26 05:43:52" [ref=e125]
+            - cell "系統管理員" [ref=e126]
+            - cell "127.0.0.1" [ref=e127]
+            - cell "UPDATE" [ref=e128]:
+              - generic [ref=e129]: UPDATE
+            - cell "employees" [ref=e130]
+            - cell "1" [ref=e131]
+            - cell "檢視" [ref=e132]:
+              - button "檢視" [ref=e133] [cursor=pointer]
+          - row "11 2026-03-26 05:42:07 系統管理員 127.0.0.1 UPDATE invoices 3 檢視" [ref=e134]:
+            - cell "11" [ref=e135]
+            - cell "2026-03-26 05:42:07" [ref=e136]
+            - cell "系統管理員" [ref=e137]
+            - cell "127.0.0.1" [ref=e138]
+            - cell "UPDATE" [ref=e139]:
+              - generic [ref=e140]: UPDATE
+            - cell "invoices" [ref=e141]
+            - cell "3" [ref=e142]
+            - cell "檢視" [ref=e143]:
+              - button "檢視" [ref=e144] [cursor=pointer]
+          - row "10 2026-03-26 05:42:07 系統管理員 127.0.0.1 UPDATE invoice_lines 14 檢視" [ref=e145]:
+            - cell "10" [ref=e146]
+            - cell "2026-03-26 05:42:07" [ref=e147]
+            - cell "系統管理員" [ref=e148]
+            - cell "127.0.0.1" [ref=e149]
+            - cell "UPDATE" [ref=e150]:
+              - generic [ref=e151]: UPDATE
+            - cell "invoice_lines" [ref=e152]
+            - cell "14" [ref=e153]
+            - cell "檢視" [ref=e154]:
+              - button "檢視" [ref=e155] [cursor=pointer]
+          - row "9 2026-03-26 05:41:57 系統管理員 127.0.0.1 UPDATE invoices 3 檢視" [ref=e156]:
+            - cell "9" [ref=e157]
+            - cell "2026-03-26 05:41:57" [ref=e158]
+            - cell "系統管理員" [ref=e159]
+            - cell "127.0.0.1" [ref=e160]
+            - cell "UPDATE" [ref=e161]:
+              - generic [ref=e162]: UPDATE
+            - cell "invoices" [ref=e163]
+            - cell "3" [ref=e164]
+            - cell "檢視" [ref=e165]:
+              - button "檢視" [ref=e166] [cursor=pointer]
+          - row "8 2026-03-26 05:41:57 系統管理員 127.0.0.1 CREATE invoice_lines None 檢視" [ref=e167]:
+            - cell "8" [ref=e168]
+            - cell "2026-03-26 05:41:57" [ref=e169]
+            - cell "系統管理員" [ref=e170]
+            - cell "127.0.0.1" [ref=e171]
+            - cell "CREATE" [ref=e172]:
+              - generic [ref=e173]: CREATE
+            - cell "invoice_lines" [ref=e174]
+            - cell "None" [ref=e175]
+            - cell "檢視" [ref=e176]:
+              - button "檢視" [ref=e177] [cursor=pointer]
+          - row "7 2026-03-26 13:30:53 系統管理員 10.2.4.254 LOGIN - - 無" [ref=e178]:
+            - cell "7" [ref=e179]
+            - cell "2026-03-26 13:30:53" [ref=e180]
+            - cell "系統管理員" [ref=e181]
+            - cell "10.2.4.254" [ref=e182]
+            - cell "LOGIN" [ref=e183]:
+              - generic [ref=e184]: LOGIN
+            - cell "-" [ref=e185]
+            - cell "-" [ref=e186]
+            - cell "無" [ref=e187]
+          - row "6 2026-03-26 12:32:16 系統管理員 127.0.0.1 LOGIN - - 無" [ref=e188]:
+            - cell "6" [ref=e189]
+            - cell "2026-03-26 12:32:16" [ref=e190]
+            - cell "系統管理員" [ref=e191]
+            - cell "127.0.0.1" [ref=e192]
+            - cell "LOGIN" [ref=e193]:
+              - generic [ref=e194]: LOGIN
+            - cell "-" [ref=e195]
+            - cell "-" [ref=e196]
+            - cell "無" [ref=e197]
+          - row "5 2026-03-26 12:32:14 系統管理員 127.0.0.1 LOGOUT - - 無" [ref=e198]:
+            - cell "5" [ref=e199]
+            - cell "2026-03-26 12:32:14" [ref=e200]
+            - cell "系統管理員" [ref=e201]
+            - cell "127.0.0.1" [ref=e202]
+            - cell "LOGOUT" [ref=e203]:
+              - generic [ref=e204]: LOGOUT
+            - cell "-" [ref=e205]
+            - cell "-" [ref=e206]
+            - cell "無" [ref=e207]
+          - row "4 2026-03-26 04:19:36 系統管理員 127.0.0.1 UPDATE departments 5 檢視" [ref=e208]:
+            - cell "4" [ref=e209]
+            - cell "2026-03-26 04:19:36" [ref=e210]
+            - cell "系統管理員" [ref=e211]
+            - cell "127.0.0.1" [ref=e212]
+            - cell "UPDATE" [ref=e213]:
+              - generic [ref=e214]: UPDATE
+            - cell "departments" [ref=e215]
+            - cell "5" [ref=e216]
+            - cell "檢視" [ref=e217]:
+              - button "檢視" [ref=e218] [cursor=pointer]
+          - row "3 2026-03-26 04:02:26 系統管理員 test_ip UPDATE departments 5 檢視" [ref=e219]:
+            - cell "3" [ref=e220]
+            - cell "2026-03-26 04:02:26" [ref=e221]
+            - cell "系統管理員" [ref=e222]
+            - cell "test_ip" [ref=e223]
+            - cell "UPDATE" [ref=e224]:
+              - generic [ref=e225]: UPDATE
+            - cell "departments" [ref=e226]
+            - cell "5" [ref=e227]
+            - cell "檢視" [ref=e228]:
+              - button "檢視" [ref=e229] [cursor=pointer]
+          - row "2 2026-03-26 04:02:26 系統管理員 test_ip CREATE departments None 檢視" [ref=e230]:
+            - cell "2" [ref=e231]
+            - cell "2026-03-26 04:02:26" [ref=e232]
+            - cell "系統管理員" [ref=e233]
+            - cell "test_ip" [ref=e234]
+            - cell "CREATE" [ref=e235]:
+              - generic [ref=e236]: CREATE
+            - cell "departments" [ref=e237]
+            - cell "None" [ref=e238]
+            - cell "檢視" [ref=e239]:
+              - button "檢視" [ref=e240] [cursor=pointer]
+          - row "1 2026-03-26 12:00:38 系統管理員 127.0.0.1 LOGIN - - 無" [ref=e241]:
+            - cell "1" [ref=e242]
+            - cell "2026-03-26 12:00:38" [ref=e243]
+            - cell "系統管理員" [ref=e244]
+            - cell "127.0.0.1" [ref=e245]
+            - cell "LOGIN" [ref=e246]:
+              - generic [ref=e247]: LOGIN
+            - cell "-" [ref=e248]
+            - cell "-" [ref=e249]
+            - cell "無" [ref=e250]
+      - status [ref=e251]: 顯示第 1 至 20 筆結果，共 20 筆
+      - generic [ref=e252]:
+        - link "上一頁" [disabled] [ref=e253]
+        - link "1" [ref=e255] [cursor=pointer]
+        - link "下一頁" [disabled] [ref=e256]

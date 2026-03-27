@@ -1,0 +1,45 @@
+- generic [active] [ref=e1]:
+  - navigation [ref=e2]:
+    - generic [ref=e3]: ⚓ 船務部帳務系統
+    - list [ref=e4]:
+      - listitem [ref=e5]:
+        - link "帳務管理" [ref=e6] [cursor=pointer]:
+          - /url: /invoices
+      - listitem [ref=e7]:
+        - link "進出港" [ref=e8] [cursor=pointer]:
+          - /url: /voyage-tasks
+      - listitem [ref=e9]:
+        - link "🔔 提醒中心" [ref=e10] [cursor=pointer]:
+          - /url: /reminders
+      - listitem [ref=e11]:
+        - link "⚙️ 系統維護 ▾" [ref=e12] [cursor=pointer]:
+          - /url: javascript:void(0)
+      - listitem [ref=e13]:
+        - generic [ref=e14]: 👤 系統管理員 (Admin)
+        - link "登出" [ref=e15] [cursor=pointer]:
+          - /url: /auth/logout
+  - generic [ref=e16]:
+    - generic [ref=e17]:
+      - heading "🔔 提醒中心" [level=1] [ref=e18]
+      - combobox [ref=e21]:
+        - option "-- 全部人員 --" [selected]
+        - option "系統管理員 (admin)"
+        - option "測試員A (test_user)"
+    - generic [ref=e24]:
+      - generic [ref=e25]:
+        - generic [ref=e26]: 提醒
+        - heading "自訂提醒 (每小時)：CS-2024-012 - 引水時間(進港)" [level=3] [ref=e27]
+        - generic [ref=e28]: 2026-03-26 05:55
+      - generic [ref=e29]:
+        - paragraph [ref=e30]: 使用者 測試員A 針對航次 CS-2024-012 的「引水時間(進港)」設定了自訂關切排程，提醒時間到了！
+        - paragraph [ref=e31]:
+          - strong [ref=e32]: 下次傳送時間：
+          - text: 2026-03-26 14:55
+        - paragraph [ref=e33]:
+          - strong [ref=e34]: 負責人：
+          - text: 測試員A
+      - generic [ref=e35]:
+        - link "前往查看任務" [ref=e36] [cursor=pointer]:
+          - /url: /voyage-tasks/3
+        - button "📩 立即傳送" [ref=e38] [cursor=pointer]
+        - button "✅ 標記完成 / 結案" [ref=e40] [cursor=pointer]

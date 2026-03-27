@@ -447,8 +447,20 @@ def api_delete_task_log(
 @router.post("/{voyage_id}/purge")
 def purge_voyage_tasks(voyage_id: int, db: Session = Depends(get_db)):
     """刪除特定航次的所有進出港任務紀錄。"""
+    from utils.audit_logger import log_action
+    
+    # 紀錄刪除動作
+    log_action(
+        db, 
+        action="DELETE_ALL_TASKS", 
+        table_name="voyage_task_logs", 
+        target_id=str(voyage_id),
+        new_value={"message": "Purged all task logs for voyage and related reminders"}
+    )
+    
     db.query(models.VoyageTaskLog).filter(
         models.VoyageTaskLog.voyage_id == voyage_id
     ).delete(synchronize_session=False)
+    
     db.commit()
     return RedirectResponse(url="/voyage-tasks", status_code=303)

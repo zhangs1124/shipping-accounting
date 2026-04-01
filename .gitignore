@@ -1,0 +1,14 @@
+# 系統備份與暫存檔排除
+backups/
+shipping.db*
+.env
+__pycache__/
+.playwright-mcp/
+*.pyc
+*.pyo
+*.pyd
+.db-shm
+.db-wal
+.vscode/
+.idea/
+*.log

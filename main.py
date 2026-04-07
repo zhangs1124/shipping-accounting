@@ -53,6 +53,9 @@ def start_scheduler():
         scheduler.start()
         print(f">>> [系統訊息] 自動提醒排程已啟動。目前時間: {datetime.now()}")
 
+APP_ENV = os.getenv("APP_ENV", "prod")
+templates.env.globals['APP_ENV'] = APP_ENV
+
 SECRET_KEY = os.getenv("SECRET_KEY")
 ALGORITHM = os.getenv("ALGORITHM", "HS256")
 

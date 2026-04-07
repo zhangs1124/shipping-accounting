@@ -12,7 +12,12 @@
 </head>
 <body>
     <nav class="navbar">
-        <div class="nav-brand">⚓ 船務部帳務系統</div>
+        <div class="nav-brand">
+            ⚓ 船務部帳務系統
+            {% if APP_ENV == 'test' %}
+            <span style="color: yellow; background-color: red; padding: 2px 6px; border-radius: 4px; font-size: 14px; margin-left: 8px;">[測試環境]</span>
+            {% endif %}
+        </div>
         <ul class="nav-links">
             {% if current_user %}
             <li><a href="/invoices">帳務管理</a></li>

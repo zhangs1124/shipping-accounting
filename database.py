@@ -1,8 +1,16 @@
+import os
+from dotenv import load_dotenv
 from sqlalchemy import create_engine, event
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
-SQLALCHEMY_DATABASE_URL = "sqlite:///./shipping.db"
+load_dotenv()
+APP_ENV = os.getenv("APP_ENV", "development")
+
+if APP_ENV == "production":
+    SQLALCHEMY_DATABASE_URL = "sqlite:///./shipping.db"
+else:
+    SQLALCHEMY_DATABASE_URL = "sqlite:///./shipping_dev.db"
 
 engine = create_engine(
     SQLALCHEMY_DATABASE_URL,

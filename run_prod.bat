@@ -1,0 +1,3 @@
+@echo off
+echo Starting PROD Environment...
+python -m uvicorn main:app --host 0.0.0.0 --port 8080

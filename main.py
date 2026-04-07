@@ -117,6 +117,9 @@ def login_page(request: Request):
 
 @app.exception_handler(status.HTTP_401_UNAUTHORIZED)
 async def unauthorized_exception_handler(request: Request, exc: Exception):
+    if request.url.path.startswith("/auth/"):
+        from fastapi.responses import JSONResponse
+        return JSONResponse(status_code=401, content={"detail": exc.detail if hasattr(exc, "detail") else "無授權訪問"})
     return RedirectResponse(url="/login")
 
 

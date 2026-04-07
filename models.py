@@ -1,3 +1,4 @@
+from datetime import datetime
 from sqlalchemy import Column, Integer, String, Date, Numeric, DateTime, ForeignKey, Table, func
 from sqlalchemy.orm import relationship
 from database import Base
@@ -9,7 +10,7 @@ class Department(Base):
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, unique=True, nullable=False)
     description = Column(String)
-    created_at = Column(DateTime, default=func.now())
+    created_at = Column(DateTime, default=datetime.now)
 
     employees = relationship("Employee", back_populates="department")
 
@@ -28,7 +29,7 @@ class Role(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, unique=True, nullable=False) # e.g., Admin, Accounting, Operator
-    created_at = Column(DateTime, default=func.now())
+    created_at = Column(DateTime, default=datetime.now)
 
     employees = relationship("Employee", back_populates="role")
     permissions = relationship("Permission", secondary=role_permissions, back_populates="roles")
@@ -55,8 +56,8 @@ class Employee(Base):
     department_id = Column(Integer, ForeignKey("departments.id"))
     role_id = Column(Integer, ForeignKey("roles.id"))
     is_active = Column(Integer, default=1) # 1: 啟用, 0: 停用
-    created_at = Column(DateTime, default=func.now())
-    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
+    created_at = Column(DateTime, default=datetime.now)
+    updated_at = Column(DateTime, default=datetime.now, onupdate=datetime.now)
 
     department = relationship("Department", back_populates="employees")
     role = relationship("Role", back_populates="employees")
@@ -70,8 +71,8 @@ class Ship(Base):
     name = Column(String, nullable=False)
     flag = Column(String)
     ship_type = Column(String)
-    created_at = Column(DateTime, default=func.now())
-    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
+    created_at = Column(DateTime, default=datetime.now)
+    updated_at = Column(DateTime, default=datetime.now, onupdate=datetime.now)
 
     voyages = relationship("Voyage", back_populates="ship")
 
@@ -91,8 +92,8 @@ class Voyage(Base):
     # 提醒中心擴充
     operator_id = Column(Integer, ForeignKey("employees.id"), nullable=True)
     
-    created_at = Column(DateTime, default=func.now())
-    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
+    created_at = Column(DateTime, default=datetime.now)
+    updated_at = Column(DateTime, default=datetime.now, onupdate=datetime.now)
 
     ship = relationship("Ship", back_populates="voyages")
     operator = relationship("Employee")
@@ -114,8 +115,8 @@ class TaskCategory(Base):
     base_milestone = Column(String, nullable=True) # e.g., 'ETA', 'ETD'
     expected_offset_hours = Column(Integer, default=0) # 偏移小時 (正數代表之後，負數代表之前)
     
-    created_at = Column(DateTime, default=func.now())
-    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
+    created_at = Column(DateTime, default=datetime.now)
+    updated_at = Column(DateTime, default=datetime.now, onupdate=datetime.now)
 
     task_logs = relationship("VoyageTaskLog", back_populates="task_category")
 
@@ -129,7 +130,7 @@ class VoyageTaskLog(Base):
     recorded_time = Column(DateTime) # 實際動作時間
     recorded_by = Column(String) # 執行的使用者
     remarks = Column(String)     # 備註
-    created_at = Column(DateTime, default=func.now())
+    created_at = Column(DateTime, default=datetime.now)
 
     voyage = relationship("Voyage", back_populates="task_logs")
     task_category = relationship("TaskCategory", back_populates="task_logs")
@@ -143,8 +144,8 @@ class ChargeItem(Base):
     name = Column(String, nullable=False)
     currency = Column(String, nullable=False, default="TWD")
     default_unit_price = Column(Numeric(18, 2), default=0)
-    created_at = Column(DateTime, default=func.now())
-    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
+    created_at = Column(DateTime, default=datetime.now)
+    updated_at = Column(DateTime, default=datetime.now, onupdate=datetime.now)
 
     invoice_lines = relationship("InvoiceLine", back_populates="charge_item")
 
@@ -160,8 +161,8 @@ class Customer(Base):
     phone = Column(String)
     email = Column(String)
     address = Column(String)
-    created_at = Column(DateTime, default=func.now())
-    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
+    created_at = Column(DateTime, default=datetime.now)
+    updated_at = Column(DateTime, default=datetime.now, onupdate=datetime.now)
 
 
 class Invoice(Base):
@@ -177,8 +178,8 @@ class Invoice(Base):
     total_amount = Column(Numeric(18, 2), default=0)
     is_reminded = Column(Integer, default=0)  # 0:未提醒, 1:已提醒 (SQLite 不支援 Boolean 預設值時常用 Integer)
     last_reminded_at = Column(DateTime, nullable=True)
-    created_at = Column(DateTime, default=func.now())
-    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
+    created_at = Column(DateTime, default=datetime.now)
+    updated_at = Column(DateTime, default=datetime.now, onupdate=datetime.now)
 
     voyage = relationship("Voyage", back_populates="invoices")
     lines = relationship("InvoiceLine", back_populates="invoice", cascade="all, delete-orphan")
@@ -195,8 +196,8 @@ class InvoiceLine(Base):
     currency = Column(String, nullable=False, default="TWD")
     subtotal = Column(Numeric(18, 2), default=0)
     remark = Column(String, default="")
-    created_at = Column(DateTime, default=func.now())
-    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
+    created_at = Column(DateTime, default=datetime.now)
+    updated_at = Column(DateTime, default=datetime.now, onupdate=datetime.now)
 
     invoice = relationship("Invoice", back_populates="lines")
     charge_item = relationship("ChargeItem", back_populates="invoice_lines")
@@ -220,8 +221,8 @@ class Reminder(Base):
     last_reminded_at = Column(DateTime, nullable=True)
     next_remind_at = Column(DateTime, nullable=True)
     
-    created_at = Column(DateTime, default=func.now())
-    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
+    created_at = Column(DateTime, default=datetime.now)
+    updated_at = Column(DateTime, default=datetime.now, onupdate=datetime.now)
 
     target_employee = relationship("Employee")
 
@@ -236,6 +237,6 @@ class AuditLog(Base):
     target_id = Column(String, nullable=True) # 被異動物件的主鍵
     old_value = Column(String, nullable=True) # 發生變更前的資料 (JSON format)
     new_value = Column(String, nullable=True) # 發生變更後的資料 (JSON format)
-    timestamp = Column(DateTime, default=func.now())
+    timestamp = Column(DateTime, default=datetime.now)
     ip_address = Column(String, nullable=True) # 來源 IP
 

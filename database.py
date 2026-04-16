@@ -7,10 +7,8 @@ from sqlalchemy.orm import sessionmaker
 load_dotenv()
 APP_ENV = os.getenv("APP_ENV", "development")
 
-if APP_ENV == "production":
-    SQLALCHEMY_DATABASE_URL = "sqlite:///./shipping.db"
-else:
-    SQLALCHEMY_DATABASE_URL = "sqlite:///./shipping_dev.db"
+# 強制所有環境統一使用主要資料庫，讓線上資料直接作為測試
+SQLALCHEMY_DATABASE_URL = "sqlite:///./shipping.db"
 
 engine = create_engine(
     SQLALCHEMY_DATABASE_URL,

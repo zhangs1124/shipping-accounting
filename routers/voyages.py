@@ -35,10 +35,15 @@ def create_voyage(
     port_of_discharge: str = Form(""),
     etd: Optional[str] = Form(None),
     eta: Optional[str] = Form(None),
-    operator_id: Optional[int] = Form(None),
+    operator_id: Optional[str] = Form(None),
     db: Session = Depends(get_db),
 ):
-    existing = db.query(models.Voyage).filter(models.Voyage.voyage_no == voyage_no).first()
+    # 處理空字串
+    op_id = int(operator_id) if operator_id and operator_id.strip() else None
+    existing = db.query(models.Voyage).filter(
+        models.Voyage.voyage_no == voyage_no,
+        models.Voyage.ship_id == ship_id
+    ).first()
     if existing:
         voyages = db.query(models.Voyage).order_by(models.Voyage.voyage_no).all()
         ships = db.query(models.Ship).order_by(models.Ship.code).all()
@@ -65,7 +70,7 @@ def create_voyage(
         port_of_discharge=port_of_discharge,
         etd=date.fromisoformat(etd) if etd else None,
         eta=date.fromisoformat(eta) if eta else None,
-        operator_id=operator_id,
+        operator_id=op_id,
         status="計畫中",
     )
     db.add(voyage)
@@ -153,18 +158,22 @@ def api_create_voyage(
     port_of_discharge: str = Form(""),
     etd: Optional[str] = Form(None),
     eta: Optional[str] = Form(None),
-    operator_id: Optional[int] = Form(None),
+    operator_id: Optional[str] = Form(None),
     db: Session = Depends(get_db),
 ):
-    if db.query(models.Voyage).filter(models.Voyage.voyage_no == voyage_no).first():
-        return JSONResponse({"error": f"航次編號 '{voyage_no}' 已存在"}, status_code=409)
+    valid_op_id = int(operator_id) if operator_id and operator_id.strip() else None
+    if db.query(models.Voyage).filter(
+        models.Voyage.voyage_no == voyage_no,
+        models.Voyage.ship_id == ship_id
+    ).first():
+        return JSONResponse({"error": f"該船的航次編號 '{voyage_no}' 已存在"}, status_code=409)
     from datetime import date
     voyage = models.Voyage(
         voyage_no=voyage_no, ship_id=ship_id,
         port_of_loading=port_of_loading, port_of_discharge=port_of_discharge,
         etd=date.fromisoformat(etd) if etd else None,
         eta=date.fromisoformat(eta) if eta else None,
-        operator_id=operator_id,
+        operator_id=valid_op_id,
         status="計畫中",
     )
     db.add(voyage)

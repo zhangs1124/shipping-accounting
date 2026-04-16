@@ -1,5 +1,5 @@
 from datetime import datetime
-from sqlalchemy import Column, Integer, String, Date, Numeric, DateTime, ForeignKey, Table, func
+from sqlalchemy import Column, Integer, String, Date, Numeric, DateTime, ForeignKey, Table, func, UniqueConstraint
 from sqlalchemy.orm import relationship
 from database import Base
 
@@ -81,8 +81,12 @@ class Voyage(Base):
     __tablename__ = "voyages"
 
     id = Column(Integer, primary_key=True, index=True)
-    voyage_no = Column(String, unique=True, nullable=False, index=True)
+    voyage_no = Column(String, nullable=False, index=True)
     ship_id = Column(Integer, ForeignKey("ships.id"), nullable=False)
+
+    __table_args__ = (
+        UniqueConstraint("ship_id", "voyage_no", name="uq_voyage_ship_no"),
+    )
     port_of_loading = Column(String)
     port_of_discharge = Column(String)
     etd = Column(Date)

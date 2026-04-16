@@ -23,14 +23,16 @@
 
 ```bash
 pip install -r requirements.txt
-python -m uvicorn main:app --host 0.0.0.0 --port 8000
+python -m uvicorn main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-開啟網址：
+目前系統已合併為單一環境，統一運行於 Port 8000。
 
-- 本機：`http://127.0.0.1:8000`
-- 內網：`http://<你的IP>:8000`
-
+## 開發規範
+- **語言**：全繁體中文。
+- **Git**：每次修改後皆須執行 Git Commit。
+- **運行**：於 `shipping-accounting` 目錄下進行開發與部署。
 
 ## 相關文件
+- [專案規範檔 (.cursorrules)](.cursorrules)
 - [專案規劃記錄 (包含 Docker 與 CI/CD 規劃)](docs/專案規劃記錄.md)

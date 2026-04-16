@@ -1,0 +1,36 @@
+# Shipping Accounting Project Rules
+
+本文檔定義了本專案的開發規範，所有 AI 助手（Antigravity/Gemini）必須嚴格遵守。
+
+## 1. 語言規範
+*   所有回覆、程式碼註解、文件皆必須使用 **「繁體中文」**。
+*   回覆開頭標註 `[已確認：不自動改程式，僅供範例並註明行號]` 並註明當前模型版本。
+
+## 2. 版本控制 (Git) 規範
+> [!IMPORTANT]
+> 遵照 `c:\Users\user\.gemini\GEMINI.md` 第 16 行規定：
+*   **每次程式碼修改後，必須執行 git commit**。
+*   Commit message 需簡潔且具備描述性（例如：`feat: 修正航次唯一性檢查`）。
+*   若有多個非連貫的修改，可以分次 commit 或在一個邏輯任務完成後統一 commit。
+
+## 3. 環境與架構規範
+*   **統一工作區**：所有開發工作皆在 `d:\project\Voyage\shipping-accounting` 目錄下進行。
+*   **對外 Port**：系統統一運行於 **Port 8000**。
+*   **運行模式**：正式環境使用 `APP_ENV=production`。
+*   **自動重啟**：使用 `--reload` 參數，確保修改後立即生效，減少手動重啟次數。
+
+## 4. 技術與設計規範
+*   **後端**：FastAPI (Python), SQLAlchemy (SQLite).
+*   **前端**：Jinja2 模板, Vanilla CSS.
+*   **視覺設計 (Aesthetics)**：
+    *   追求 **Premium 高質感** 視覺效果（使用現代調色盤、Google Fonts、流暢動畫與深色模式支援）。
+    *   嚴禁使用未經整理的原生瀏覽器樣式。
+    *   所有互動元件（Modal, AJAX）需保持一致的使用者體驗。
+
+## 5. 文件與記錄
+*   **Readme**：每個專案必須具備 `readme.md` 說明。
+*   **開發經驗**：每次完成重大功能或解決複雜 Bug 後，需產出 `walkthrough.md` 記錄開發經驗。
+*   **資料庫遷移**：涉及 Schema 變更時，必須編寫與執行遷移腳本，並保留腳本於 `scratch/` 目錄下。
+
+---
+*Last Updated: 2026-04-16*

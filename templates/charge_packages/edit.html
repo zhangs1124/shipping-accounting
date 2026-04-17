@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block title %}編輯組套: {{ package.name }}{% endblock %}
+{% block content %}
+
+<div class="page-header">
+    <h1>📦 編輯組套內容</h1>
+    <a href="/charge-packages" class="btn btn-secondary">← 返回清單</a>
+</div>
+
+{% if request.query_params.get('error') %}
+<div class="alert alert-error">{{ request.query_params.get('error') }}</div>
+{% endif %}
+
+<div class="card" style="margin-bottom:24px;">
+    <h2>基本資料</h2>
+    <form method="post" action="/charge-packages/{{ package.id }}/edit" class="form-grid">
+        <div class="form-group">
+            <label>組套名稱 *</label>
+            <input type="text" name="name" required value="{{ package.name }}">
+        </div>
+        <div class="form-group">
+            <label>說明</label>
+            <input type="text" name="description" value="{{ package.description or '' }}">
+        </div>
+        <div class="form-actions" style="grid-column: 1 / -1; justify-content: flex-start; margin-top:0;">
+            <button type="submit" class="btn btn-primary">儲存變更</button>
+        </div>
+    </form>
+</div>
+
+<div class="card" style="margin-bottom:24px;">
+    <h2>目前包含的費用項目</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>項目代碼</th>
+                <th>項目名稱</th>
+                <th class="text-right">預設單價 (參考)</th>
+                <th class="text-center">操作</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in package.items %}
+            <tr>
+                <td>{{ item.charge_item.code }}</td>
+                <td>{{ item.charge_item.name }}</td>
+                <td class="text-right">{{ "{:,.2f}".format(item.charge_item.default_unit_price) }} {{ item.charge_item.currency }}</td>
+                <td class="text-center">
+                    <form method="post" action="/charge-packages/{{ package.id }}/items/{{ item.id }}/delete" style="display:inline;">
+                        <button type="submit" class="btn btn-danger btn-sm">移除</button>
+                    </form>
+                </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="4" class="text-center" style="color:#999; padding:20px;">這個組套還沒有加入任何費用項目</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div class="card">
+    <h2>加入新費用至組套</h2>
+    <form method="post" action="/charge-packages/{{ package.id }}/items" style="display:flex; gap:16px; align-items:flex-end;">
+        <div class="form-group" style="margin-bottom:0; flex-grow:1;">
+            <label>選擇收費項目</label>
+            <select name="charge_item_id" required>
+                <option value="">-- 請選擇 --</option>
+                {% for ci in available_items %}
+                <option value="{{ ci.id }}">{{ ci.code }} - {{ ci.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <input type="hidden" name="default_quantity" value="1.0">
+        <button type="submit" class="btn btn-success">加入組套</button>
+    </form>
+</div>
+
+{% endblock %}

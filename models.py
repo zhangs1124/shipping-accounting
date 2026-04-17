@@ -231,6 +231,30 @@ class Reminder(Base):
     target_employee = relationship("Employee")
 
 
+class ChargePackage(Base):
+    __tablename__ = "charge_packages"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, unique=True, nullable=False, index=True)
+    description = Column(String)
+    created_at = Column(DateTime, default=datetime.now)
+    updated_at = Column(DateTime, default=datetime.now, onupdate=datetime.now)
+
+    items = relationship("ChargePackageItem", back_populates="package", cascade="all, delete-orphan")
+
+
+class ChargePackageItem(Base):
+    __tablename__ = "charge_package_items"
+
+    id = Column(Integer, primary_key=True, index=True)
+    package_id = Column(Integer, ForeignKey("charge_packages.id"), nullable=False)
+    charge_item_id = Column(Integer, ForeignKey("charge_items.id"), nullable=False)
+    default_quantity = Column(Numeric(18, 4), nullable=False, default=1)
+    
+    package = relationship("ChargePackage", back_populates="items")
+    charge_item = relationship("ChargeItem")
+
+
 class AuditLog(Base):
     __tablename__ = "audit_logs"
 

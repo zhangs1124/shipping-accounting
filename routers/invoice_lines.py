@@ -64,6 +64,49 @@ def create_line(
     return RedirectResponse(url=f"/invoices/{invoice_id}", status_code=303)
 
 
+@router.post("/invoices/{invoice_id}/lines/apply-package")
+def apply_package(
+    invoice_id: int,
+    package_id: int = Form(...),
+    db: Session = Depends(get_db)
+):
+    invoice = db.query(models.Invoice).filter(models.Invoice.id == invoice_id).first()
+    if not invoice:
+        return RedirectResponse(url="/invoices", status_code=303)
+
+    if not _check_editable(invoice):
+        return RedirectResponse(
+            url=f"/invoices/{invoice_id}?error=帳務已開立，無法新增明細", status_code=303
+        )
+
+    pkg = db.query(models.ChargePackage).filter(models.ChargePackage.id == package_id).first()
+    if not pkg:
+        return RedirectResponse(url=f"/invoices/{invoice_id}?error=找不到該組套", status_code=303)
+        
+    for item in pkg.items:
+        # Use default price and currency from charge_item
+        qty = Decimal(item.default_quantity)
+        price = Decimal(item.charge_item.default_unit_price)
+        subtotal = qty * price
+        
+        line = models.InvoiceLine(
+            invoice_id=invoice_id,
+            charge_item_id=item.charge_item_id,
+            quantity=qty,
+            unit_price=price,
+            currency=item.charge_item.currency,
+            subtotal=subtotal,
+            remark=f"由 [{pkg.name}] 組套帶入"
+        )
+        db.add(line)
+        
+    db.flush()
+    db.refresh(invoice)
+    _recalc_total(invoice, db)
+
+    return RedirectResponse(url=f"/invoices/{invoice_id}", status_code=303)
+
+
 @router.get("/invoices/{invoice_id}/lines/{line_id}/edit", response_class=HTMLResponse)
 def edit_line_form(invoice_id: int, line_id: int, request: Request, db: Session = Depends(get_db)):
     invoice = db.query(models.Invoice).filter(models.Invoice.id == invoice_id).first()

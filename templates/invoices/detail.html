@@ -154,7 +154,22 @@
     <!-- 新增明細表單（草稿狀態才顯示） -->
     {% if can_edit %}
     <div style="border-top:1px solid #e9ecef; padding-top:16px; margin-top:8px;">
-        <h3 style="font-size:0.95rem; color:#1a3a5c; margin-bottom:12px;">新增明細</h3>
+        
+        <h3 style="font-size:0.95rem; color:#1a3a5c; margin-bottom:12px;">📦 套用費用組套 (批次帶入)</h3>
+        <form method="post" action="/invoices/{{ invoice.id }}/lines/apply-package" style="display:flex; gap:16px; align-items:flex-end; margin-bottom: 24px; padding: 16px; background: #f4f8fa; border-radius: 6px; border: 1px dashed #b8daff;">
+            <div class="form-group" style="margin-bottom:0; flex-grow:1;">
+                <label style="color:#0056b3; font-weight:bold;">選擇身分組套</label>
+                <select name="package_id" required style="border:1px solid #b8daff;">
+                    <option value="">-- 請選擇組套 --</option>
+                    {% for pkg in charge_packages %}
+                    <option value="{{ pkg.id }}">{{ pkg.name }} (共 {{ pkg.items|length }} 項)</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <button type="submit" class="btn btn-primary" onclick="return confirm('確定要套用此組套的所有預設費用嗎？')">一鍵套用</button>
+        </form>
+
+        <h3 style="font-size:0.95rem; color:#1a3a5c; margin-bottom:12px;">新增單筆明細</h3>
         <form method="post" action="/invoices/{{ invoice.id }}/lines" id="addLineForm">
             <div class="form-grid">
                 <div class="form-group">

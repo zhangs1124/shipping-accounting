@@ -340,10 +340,12 @@ def invoice_detail(invoice_id: int, request: Request, db: Session = Depends(get_
         return RedirectResponse(url="/invoices", status_code=303)
 
     charge_items = db.query(models.ChargeItem).order_by(models.ChargeItem.code).all()
+    charge_packages = db.query(models.ChargePackage).order_by(models.ChargePackage.name).all()
     return templates.TemplateResponse("invoices/detail.html", {
         "request": request,
         "invoice": invoice,
         "charge_items": charge_items,
+        "charge_packages": charge_packages,
         "statuses": INVOICE_STATUSES,
         "can_edit": invoice.status == "草稿",
         "today_str": date.today().isoformat(),

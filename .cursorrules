@@ -32,5 +32,8 @@
 *   **開發經驗**：每次完成重大功能或解決複雜 Bug 後，需產出 `walkthrough.md` 記錄開發經驗。
 *   **資料庫遷移**：涉及 Schema 變更時，必須編寫與執行遷移腳本，並保留腳本於 `scratch/` 目錄下。
 
+#每次需要打開browser 時，請一定改用mcp playwright 
+#每次修改後，要做git 的 commit 
+
 ---
 *Last Updated: 2026-04-16*

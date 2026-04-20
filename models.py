@@ -90,7 +90,8 @@ class Voyage(Base):
     port_of_loading = Column(String)
     port_of_discharge = Column(String)
     etd = Column(Date)
-    eta = Column(Date)
+    eta = Column(DateTime)
+    arrival_date = Column(DateTime)
     status = Column(String, default="計畫中")  # 計畫中/進行中/已完成
     
     # 提醒中心擴充

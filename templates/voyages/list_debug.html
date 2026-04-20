@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}Debug{% endblock %}
+{% block content %}
+<h1>Debug Voyage</h1>
+<ul>
+{% for v in voyages %}
+    <li>{{ v.voyage_no }} - {{ v.eta }}</li>
+{% endfor %}
+</ul>
+{% endblock %}

@@ -4,7 +4,7 @@
 
 ## 功能
 - 船隻管理
-- 航次管理
+- 航次管理（支援 ETD, ETA(DateTime), ArrivalDate(DateTime)）
 - 進出港管理（SOP 任務時間檢核清單與規費關聯）
 - 檢疫項目管理（CRUD 維護基本檔）
 - 帳務管理（主檔/明細）

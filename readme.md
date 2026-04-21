@@ -22,16 +22,13 @@
 
 ## 安裝與執行
 
-### 開發環境 (DEV)
-```bash
-python -m uvicorn main:app --reload --host 0.0.0.0 --port 8000
-```
+### 建議執行方式 (Port 8000)
+直接執行以下批次檔即可啟動系統：
+- **`run_app.bat`**：啟動於 Port 8000，支援熱重載（Hot Reload）。
 
-### 正式環境 (PROD)
-```bash
-# 包含 SSL (8443) 與自動跳轉 (8000)
-run_prod.bat
-```
+### 其他環境
+- **開發環境 (DEV)**: `run_dev.bat` (同樣運行於 Port 8000)
+- **正式環境 (SSL/PROD)**: `run_prod.bat` (運行於 Port 8443 並提供 8000 跳轉服務)
 
 ## 開發規範
 - **語言**：全繁體中文。

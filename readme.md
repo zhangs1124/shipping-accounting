@@ -22,12 +22,16 @@
 
 ## 安裝與執行
 
+### 開發環境 (DEV)
 ```bash
-pip install -r requirements.txt
 python -m uvicorn main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-目前系統已合併為單一環境，統一運行於 Port 8000。
+### 正式環境 (PROD)
+```bash
+# 包含 SSL (8443) 與自動跳轉 (8000)
+run_prod.bat
+```
 
 ## 開發規範
 - **語言**：全繁體中文。
@@ -38,3 +42,4 @@ python -m uvicorn main:app --reload --host 0.0.0.0 --port 8000
 - [專案規範檔 (.cursorrules)](.cursorrules)
 - [專案規劃記錄 (包含 Docker 與 CI/CD 規劃)](docs/專案規劃記錄.md)
 - [開發經驗：帳務組套功能實作](docs/開發經驗_帳務組套功能.md)
+- [開發經驗：Playwright 伺服器測試](docs/開發經驗_Playwright伺服器測試.md)

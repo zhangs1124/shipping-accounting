@@ -5,6 +5,8 @@ from fastapi.templating import Jinja2Templates
 from fastapi.responses import RedirectResponse
 
 import os
+from dotenv import load_dotenv
+load_dotenv()
 from jose import jwt, JWTError
 from sqlalchemy.orm import joinedload
 import models

@@ -1,5 +1,7 @@
 @echo off
-echo Starting Shipping Accounting System...
-@echo off
-python -m uvicorn main:app --reload --host 0.0.0.0 --port 8000
+chcp 65001
+echo ========================================
+echo   Starting Shipping System (10.2.4.15:8001)
+echo ========================================
+python -m uvicorn main:app --host 10.2.4.15 --port 8001
 pause

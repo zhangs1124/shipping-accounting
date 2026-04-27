@@ -1,3 +1,0 @@
-@echo off
-echo Starting PROD Environment with SSL and Auto-Redirect...
-python run_prod_servers.py

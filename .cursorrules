@@ -32,8 +32,35 @@
 *   **開發經驗**：每次完成重大功能或解決複雜 Bug 後，需產出 `walkthrough.md` 記錄開發經驗。
 *   **資料庫遷移**：涉及 Schema 變更時，必須編寫與執行遷移腳本，並保留腳本於 `scratch/` 目錄下。
 
+## 6. 環境變數規範
+> [!IMPORTANT]
+> 為保護敏感金鑰與憑證（如 `GITHUB_TOKEN`、SMTP 密碼等）安全：
+*   **本地儲存**：敏感憑證一律存放在本地的 `.env` 檔案中，或設定於系統/使用者環境變數。
+*   **Git 排除**：`.env` 已設定為 Git 排除追蹤，**嚴禁將含有真實 Token 或密碼的任何檔案提交至 Git 倉庫**，以防外洩或被 GitHub 自動廢除。
+*   **取得環境變數的方式**：
+    *   **在 Python/FastAPI 程式碼中讀取**：
+        ```python
+        import os
+        from dotenv import load_dotenv
+
+        # 載入 .env 檔案
+        load_dotenv()
+
+        # 讀取環境變數 (例如 GITHUB_TOKEN)
+        github_token = os.getenv("GITHUB_TOKEN")
+        ```
+    *   **在 Windows PowerShell 中讀取**：
+        ```powershell
+        $env:GITHUB_TOKEN
+        ```
+    *   **在 Windows Command Prompt (CMD) 中讀取**：
+        ```cmd
+        echo %GITHUB_TOKEN%
+        ```
+
 #每次需要打開browser 時，請一定改用mcp playwright 
 #每次修改後，要做git 的 commit 
 
 ---
-*Last Updated: 2026-04-16*
+*Last Updated: 2026-05-26*
+
